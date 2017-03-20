@@ -17,9 +17,9 @@ class InvoiceChangeList(ChangeList):
         q_amount = self.result_list.aggregate(amount_sum=Sum('invoice__invoice__invoice__amount'))
         try:
             receivable_sum = (q_amount['amount_sum'] or 0) - (q_income['income_sum'] or 0)
-            self.sum = [receivable_sum, q_income['income_sum']]
+            self.sum = [q_amount['amount_sum'],receivable_sum, q_income['income_sum']]
         except KeyError:
-            self.sum = ['', '']
+            self.sum = ['','', '']
 
 
 class BillInlineFormSet(BaseInlineFormSet):
@@ -57,7 +57,7 @@ class SaleListFilter(admin.SimpleListFilter):
         if self.value() == 'sale':
             return queryset.filter(invoice__contract__salesman__in=list(User.objects.filter(groups__id=3)))
         if self.value() == 'company':
-            return queryset.filter(invoice__contract__salesman__in=list(User.objects.filter(groups__in=6)))
+            return queryset.filter(invoice__contract__salesman__in=list(User.objects.filter(groups__id=6)))
         qs = User.objects.filter(groups__in=[3, 6])
         for i in qs:
             if self.value() == i.username:
@@ -78,10 +78,10 @@ class InvoiceAdmin(admin.ModelAdmin):
            'fields': ('invoice_title', 'invoice_amount', 'invoice_note')
         }),
         ('开票信息', {
-            'fields': ('invoice_code', 'date')  # 历史数据添加时临时调取'date'
+            'fields': ('invoice_code',)
         }),
         ('邮寄信息', {
-            'fields': ('tracking_number', 'send_date')  # 历史数据添加时临时调取'send_date'
+            'fields': ('tracking_number',)
         })
     )
 
