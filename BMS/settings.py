@@ -22,9 +22,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '9*hjg(hfpp8#m6#t3ha(tv$xd-_iyx@^0zyrh)+_g+yb8t^2ij'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['192.168.0.223']
+ALLOWED_HOSTS = ['bms.realbio.cn']
 
 
 # Application definition
@@ -36,11 +36,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'mm',
+    'fm',
     'pm',
     'crm',
     'lims',
-    'mm',
-    'fm',
     'import_export',
     'daterange_filter',
 ]
