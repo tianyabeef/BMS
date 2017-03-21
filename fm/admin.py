@@ -7,6 +7,12 @@ from django.db.models import Sum
 from django.forms.models import BaseInlineFormSet
 from daterange_filter.filter import DateRangeFilter
 from django.contrib.auth.models import User
+from import_export import resources
+from import_export.admin import ImportExportActionModelAdmin
+from import_export import fields
+from import_export.widgets import ForeignKeyWidget
+from mm.models import Contract
+
 
 
 class InvoiceChangeList(ChangeList):
@@ -20,6 +26,28 @@ class InvoiceChangeList(ChangeList):
             self.sum = [q_amount['amount_sum'],receivable_sum, q_income['income_sum']]
         except KeyError:
             self.sum = ['','', '']
+
+class InvoiceInfoResource(resources.ModelResource):
+    contract_salesman = fields.Field(column_name='销售人员', attribute='invoice__contract',widget=ForeignKeyWidget(Contract, 'salesman'))
+    invoice_contract_number = fields.Field(column_name='合同号',attribute='invoice__contract',widget=ForeignKeyWidget(Contract, 'contract_number'))
+    contract_name = fields.Field(column_name='项目',attribute='invoice__contract',widget=ForeignKeyWidget(Contract, 'name'))
+    invoice_title = fields.Field(attribute='invoice__title', column_name="开票单位")
+    contract_price = fields.Field(column_name='合同单价',attribute='invoice__contract',widget=ForeignKeyWidget(Contract, 'price'))
+    contract_range = fields.Field(column_name='价格区间',attribute='invoice__contract',widget=ForeignKeyWidget(Contract, 'range'))
+    contract_fis_amount = fields.Field(column_name='首款额',attribute='invoice__contract',widget=ForeignKeyWidget(Contract, 'fis_amount'))
+    contract_fin_amount = fields.Field(column_name='尾款额',attribute='invoice__contract',widget=ForeignKeyWidget(Contract, 'fin_amount'))
+    contract_income = fields.Field(column_name='回款金额',attribute='income')
+    contract_income_date = fields.Field(column_name='到款日期',attribute='income_date')
+
+
+    class Meta:
+        model = Invoice
+        skip_unchanged = True
+        fields = ('contract_salesman','invoice_contract_number','contract_name','invoice_title','contract_price','contract_range',
+                  'contract_fis_amount','contract_fin_amount','contract_income','contract_income_date')
+        export_order = ('contract_salesman','invoice_contract_number','contract_name','invoice_title','contract_price','contract_range',
+                  'contract_fis_amount','contract_fin_amount','contract_income','contract_income_date')
+
 
 
 class BillInlineFormSet(BaseInlineFormSet):
@@ -64,7 +92,8 @@ class SaleListFilter(admin.SimpleListFilter):
                 return queryset.filter(invoice__contract__salesman=i)
 
 
-class InvoiceAdmin(admin.ModelAdmin):
+class InvoiceAdmin(ImportExportActionModelAdmin):
+    resource_class = InvoiceInfoResource
     list_display = ('invoice_contract_number', 'invoice_contract_name', 'contract_amount', 'salesman_name',
                     'contract_type', 'invoice_period', 'invoice_title', 'invoice_amount', 'income_date',
                     'bill_receivable', 'invoice_code', 'date', 'tracking_number', 'send_date')
@@ -166,6 +195,8 @@ class InvoiceAdmin(admin.ModelAdmin):
                 for instance in instances:
                     instance.save()
                 formset.save_m2m()
+                obj_invoice.income = sum_income
+                obj_invoice.save()
             else:
                 messages.set_level(request, messages.ERROR)
                 self.message_user(request, '进账总额 %.2f 超过开票金额 %.2f' % (sum_income, invoice_amount),
