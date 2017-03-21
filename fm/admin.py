@@ -217,7 +217,9 @@ class InvoiceAdmin(ImportExportActionModelAdmin):
         if not request.user.has_perm('fm.delete_invoice'):
             actions = None
         if not request.user.has_perm('fm.add_invoice'):
-            if 'delete_selected' in actions:
+            if not actions:
+                actions = None
+            elif 'delete_selected' in actions:
                 del actions['delete_selected']
         return actions
 
