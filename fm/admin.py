@@ -214,8 +214,11 @@ class InvoiceAdmin(ImportExportActionModelAdmin):
     def get_actions(self, request):
         # 无删除或新增权限人员取消actions
         actions = super(InvoiceAdmin, self).get_actions(request)
-        if not request.user.has_perm('fm.delete_invoice') or not request.user.has_perm('fm.add_invoice'):
+        if not request.user.has_perm('fm.delete_invoice'):
             actions = None
+        if not request.user.has_perm('fm.add_invoice'):
+            if 'delete_selected' in actions:
+                del actions['delete_selected']
         return actions
 
     def get_readonly_fields(self, request, obj=None):
