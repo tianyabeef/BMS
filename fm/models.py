@@ -9,7 +9,7 @@ class Invoice(models.Model):
     invoice_code = models.CharField('发票号码', max_length=12, unique=True)
     date = models.DateField('开票日期', null=True)
     tracking_number = models.CharField('快递单号', max_length=15, blank=True)
-    send_date = models.DateField('寄出日期', null=True)
+    send_date = models.DateField('寄出日期', null=True,blank=True)
     income_date = models.DateField('到账日期', null=True)
     income = models.DecimalField('到账金额',null=True,max_digits=12,decimal_places=2)
 

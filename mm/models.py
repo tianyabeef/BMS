@@ -19,22 +19,22 @@ class Contract(models.Model):
     name = models.CharField('合同名', max_length=100)
     type = models.IntegerField(
         '类型',
-        choices=TYPE_CHOICES,
+        choices=TYPE_CHOICES,blank=True
     )
     salesman = models.ForeignKey(User, verbose_name='业务员')
-    price = models.DecimalField('单价', max_digits=7, decimal_places=2)
+    price = models.DecimalField('单价', max_digits=7, decimal_places=2,blank=True)
     range = models.IntegerField(
         '价格区间',
-        choices=RANGE_CHOICES,
+        choices=RANGE_CHOICES,blank=True
     )
     fis_amount = models.DecimalField('首款额', max_digits=12, decimal_places=2)
     fis_date = models.DateField('首款到款日', blank=True, null=True)
     fin_amount = models.DecimalField('尾款额', max_digits=12, decimal_places=2)
     fin_date = models.DateField('尾款到款日', blank=True, null=True)
-    send_date = models.DateField('合同寄出日', null=True)
+    send_date = models.DateField('合同寄出日', null=True,blank=True)
     tracking_number = models.CharField('快递单号', max_length=15, blank=True)
-    receive_date = models.DateField('合同寄到日', null=True)
-    contract_file = models.FileField('附件', upload_to='uploads/%Y/%m')
+    receive_date = models.DateField('合同寄到日', null=True,blank=True)
+    contract_file = models.FileField('附件', upload_to='uploads/%Y/%m',blank=True)
 
     class Meta:
         verbose_name = '合同管理'
