@@ -110,10 +110,10 @@ class InvoiceAdmin(ImportExportActionModelAdmin):
            'fields': ('invoice_title', 'invoice_amount', 'invoice_note')
         }),
         ('开票信息', {
-            'fields': ('invoice_code',)
+            'fields': ('invoice_code','date')
         }),
         ('邮寄信息', {
-            'fields': ('tracking_number',)
+            'fields': ('tracking_number','send_date')
         })
     )
 

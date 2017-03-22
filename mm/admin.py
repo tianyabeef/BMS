@@ -131,7 +131,7 @@ class ContractAdmin(admin.ModelAdmin):
             'fields': ('contract_number', 'name', 'type', 'salesman', ('price', 'range'), ('fis_amount', 'fin_amount'))
         }),
         ('邮寄信息', {
-            'fields': ('tracking_number',)
+            'fields': ('tracking_number','send_date','receive_date')
         }),
         ('上传合同', {
             'fields': ('contract_file',)
