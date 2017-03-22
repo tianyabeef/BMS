@@ -28,14 +28,13 @@ class InvoiceChangeList(ChangeList):
             self.sum = ['','', '']
 
 class InvoiceInfoResource(resources.ModelResource):
-    contract_salesman = fields.Field(column_name='销售人员', attribute='invoice__contract',widget=ForeignKeyWidget(Contract, 'salesman'))
+    contract_salesman = fields.Field(column_name='销售人员')
     invoice_contract_number = fields.Field(column_name='合同号',attribute='invoice__contract',widget=ForeignKeyWidget(Contract, 'contract_number'))
     contract_name = fields.Field(column_name='项目',attribute='invoice__contract',widget=ForeignKeyWidget(Contract, 'name'))
     invoice_title = fields.Field(attribute='invoice__title', column_name="开票单位")
     contract_price = fields.Field(column_name='合同单价',attribute='invoice__contract',widget=ForeignKeyWidget(Contract, 'price'))
-    contract_range = fields.Field(column_name='价格区间',attribute='invoice__contract',widget=ForeignKeyWidget(Contract, 'range'))
-    contract_fis_amount = fields.Field(column_name='首款额',attribute='invoice__contract',widget=ForeignKeyWidget(Contract, 'fis_amount'))
-    contract_fin_amount = fields.Field(column_name='尾款额',attribute='invoice__contract',widget=ForeignKeyWidget(Contract, 'fin_amount'))
+    contract_range = fields.Field(column_name='价格区间')
+    contract_amount = fields.Field(column_name='合同金额')
     contract_income = fields.Field(column_name='回款金额',attribute='income')
     contract_income_date = fields.Field(column_name='到款日期',attribute='income_date')
 
@@ -44,12 +43,16 @@ class InvoiceInfoResource(resources.ModelResource):
         model = Invoice
         skip_unchanged = True
         fields = ('contract_salesman','invoice_contract_number','contract_name','invoice_title','contract_price','contract_range',
-                  'contract_fis_amount','contract_fin_amount','contract_income','contract_income_date')
+                  'contract_amount','contract_income','contract_income_date')
         export_order = ('contract_salesman','invoice_contract_number','contract_name','invoice_title','contract_price','contract_range',
-                  'contract_fis_amount','contract_fin_amount','contract_income','contract_income_date')
+                  'contract_amount','contract_income','contract_income_date')
 
-
-
+    def dehydrate_contract_amount(self, invoice):
+        return '%.2f' % (invoice.invoice.contract.fis_amount+invoice.invoice.contract.fin_amount)
+    def dehydrate_contract_salesman(self,invoice):
+        return '%s%s' % (invoice.invoice.contract.salesman.last_name,invoice.invoice.contract.salesman.first_name)
+    def dehydrate_contract_range(self,invoice):
+        return '%s' % (invoice.invoice.contract.get_range_display())
 class BillInlineFormSet(BaseInlineFormSet):
     def clean(self):
         super(BillInlineFormSet, self).clean()
