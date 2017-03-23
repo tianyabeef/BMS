@@ -37,22 +37,30 @@ class InvoiceInfoResource(resources.ModelResource):
     contract_amount = fields.Field(column_name='合同金额')
     contract_income = fields.Field(column_name='回款金额',attribute='income')
     contract_income_date = fields.Field(column_name='到款日期',attribute='income_date')
+    invoice_code = fields.Field(attribute='invoice_code',column_name='发票号码')
+    invoice_type = fields.Field(column_name='发票类型')
+    invoice_tax_amount = fields.Field(attribute='tax_amount',column_name='开票税额')
+    invoice_content = fields.Field(attribute='invoice__content',column_name='开票内容')
 
 
     class Meta:
         model = Invoice
         skip_unchanged = True
         fields = ('contract_salesman','invoice_contract_number','contract_name','invoice_title','contract_price','contract_range',
-                  'contract_amount','contract_income','contract_income_date')
+                  'contract_amount','contract_income','contract_income_date','invoice_code','invoice_code',
+                  'invoice_type','invoice_tax_amount','invoice_content')
         export_order = ('contract_salesman','invoice_contract_number','contract_name','invoice_title','contract_price','contract_range',
-                  'contract_amount','contract_income','contract_income_date')
+                        'contract_amount','contract_income','contract_income_date','invoice_code','invoice_code',
+                        'invoice_type','invoice_tax_amount','invoice_content')
 
     def dehydrate_contract_amount(self, invoice):
         return '%.2f' % (invoice.invoice.contract.fis_amount+invoice.invoice.contract.fin_amount)
     def dehydrate_contract_salesman(self,invoice):
         return '%s%s' % (invoice.invoice.contract.salesman.last_name,invoice.invoice.contract.salesman.first_name)
     def dehydrate_contract_range(self,invoice):
-        return '%s' % (invoice.invoice.contract.get_range_display())
+        return invoice.invoice.contract.get_range_display()
+    def dehydrate_invoice_type(self,invoice):
+        return invoice.invoice.get_type_display()
 class BillInlineFormSet(BaseInlineFormSet):
     def clean(self):
         super(BillInlineFormSet, self).clean()
@@ -107,7 +115,7 @@ class InvoiceAdmin(ImportExportActionModelAdmin):
     ]
     fieldsets = (
         ('申请信息', {
-           'fields': ('invoice_title', 'invoice_amount', 'invoice_note')
+           'fields': ('invoice_title', 'invoice_amount','invoice_type','tax_amount','invoice_content', 'invoice_note')
         }),
         ('开票信息', {
             'fields': ('invoice_code','date')
@@ -152,6 +160,14 @@ class InvoiceAdmin(ImportExportActionModelAdmin):
     def invoice_amount(self, obj):
         return obj.invoice.amount
     invoice_amount.short_description = '发票金额'
+
+    def invoice_type(self,obj):
+        return obj.invoice.get_type_display()
+    invoice_type.short_description = '发票类型'
+
+    def invoice_content(self,obj):
+        return obj.invoice.content
+    invoice_content.short_description = '开票内容'
 
     def invoice_note(self, obj):
         return obj.invoice.note
@@ -228,8 +244,8 @@ class InvoiceAdmin(ImportExportActionModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         if not request.user.has_perm('fm.add_invoice'):
-            return ['invoice_title', 'invoice_amount', 'invoice_note', 'invoice_code', 'tracking_number']
-        return ['invoice_title', 'invoice_amount', 'invoice_note']
+            return ['invoice_title', 'invoice_amount','invoice_type','invoice_content', 'invoice_note', 'invoice_code', 'tracking_number']
+        return ['invoice_title', 'invoice_amount', 'invoice_type','invoice_content','invoice_note']
 
     def get_formsets_with_inlines(self, request, obj=None):
         # add page不显示BillInline

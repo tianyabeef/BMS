@@ -38,7 +38,7 @@ class InvoiceAdmin(admin.ModelAdmin):
     list_display = ('contract', 'title', 'period', 'amount', 'note', 'submit')
     actions = ['make_invoice_submit']
     list_display_links = None
-    fields = ('contract', 'title', 'period', 'amount', 'note')
+    fields = ('contract', 'title', 'period', 'amount','type','content', 'note')
 
     def make_invoice_submit(self, request, queryset):
         """
@@ -81,7 +81,7 @@ class InvoiceInline(admin.StackedInline):
     model = Invoice
     formset = InvoiceInlineFormSet
     extra = 1
-    fields = ('title', 'period', 'amount', 'note')
+    fields = ('title', 'period', 'amount','type','content', 'note')
 
 
 class ContractChangeList(ChangeList):
@@ -255,13 +255,13 @@ class ContractAdmin(admin.ModelAdmin):
         if instances:
             fis_amount = instances[0].contract.fis_amount
             fin_amount = instances[0].contract.fin_amount
-            if fis_amount >= formset.instance.__total__['fis'] and fin_amount >= formset.instance.__total__['fin']:
-                for instance in instances:
-                    instance.save()
-                formset.save_m2m()
-            else:
-                messages.set_level(request, messages.ERROR)
-                self.message_user(request, '开票申请总额超过对应款期可开额度,未成功添加开票', level=messages.ERROR)
+            # if fis_amount >= formset.instance.__total__['fis'] and fin_amount >= formset.instance.__total__['fin']:
+            for instance in instances:
+                instance.save()
+            formset.save_m2m()
+            # else:
+            #     messages.set_level(request, messages.ERROR)
+            #     self.message_user(request, '开票申请总额超过对应款期可开额度,未成功添加开票', level=messages.ERROR)
 
     def save_model(self, request, obj, form, change):
         """

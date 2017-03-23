@@ -27,6 +27,7 @@ class Contract(models.Model):
         '价格区间',
         choices=RANGE_CHOICES,blank=True
     )
+    all_amount = models.DecimalField('总款额', max_digits=12, decimal_places=2)
     fis_amount = models.DecimalField('首款额', max_digits=12, decimal_places=2)
     fis_date = models.DateField('首款到款日', blank=True, null=True)
     fin_amount = models.DecimalField('尾款额', max_digits=12, decimal_places=2)
@@ -57,6 +58,10 @@ class Invoice(models.Model):
         ('FIS', '首款'),
         ('FIN', '尾款'),
     )
+    INVOICE_TYPE_CHOICES = (
+        ('CC', '普票'),
+        ('SC', '专票'),
+    )
     contract = models.ForeignKey(
         Contract,
         verbose_name='合同',
@@ -65,6 +70,8 @@ class Invoice(models.Model):
     title = models.CharField('发票抬头', max_length=25)
     period = models.CharField('款期', max_length=3, choices=PERIOD_CHOICES, default='FIS')
     amount = models.DecimalField('开票金额', max_digits=9, decimal_places=2)
+    type = models.CharField('发票类型', max_length=3, choices=INVOICE_TYPE_CHOICES, default='CC')
+    content = models.TextField('发票内容')
     note = models.TextField('备注')
     submit = models.NullBooleanField('提交开票', null=True)
 
