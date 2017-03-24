@@ -115,10 +115,10 @@ class InvoiceAdmin(ImportExportActionModelAdmin):
     ]
     fieldsets = (
         ('申请信息', {
-           'fields': ('invoice_title', 'invoice_amount','invoice_type','tax_amount','invoice_content', 'invoice_note')
+           'fields': ('invoice_title', 'invoice_amount','invoice_type','invoice_content', 'invoice_note')
         }),
         ('开票信息', {
-            'fields': ('invoice_code','date')
+            'fields': ('invoice_code','tax_amount','date')
         }),
         ('邮寄信息', {
             'fields': ('tracking_number','send_date')
