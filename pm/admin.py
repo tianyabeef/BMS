@@ -27,7 +27,9 @@ def add_business_days(from_date, number_of_days):
 
 def is_period_income(contract, period):
     income = Bill.objects.filter(invoice__invoice__contract=contract).filter(invoice__invoice__period=period)\
-            .aggregate(total_income=Sum('income'))['total_income'] or 0
+            .aggregate(total_income=Sum('income'))['total_income']
+    if not income:
+        return 0.001 #未开票
     if period == 'FIS':
         amount = Contract.objects.filter(contract_number=contract)[0].fis_amount
     elif period == 'FIN':
@@ -49,6 +51,8 @@ class StatusListFilter(admin.SimpleListFilter):
             ('SEQ', '测序中'),
             ('ANA', '分析中'),
             ('FIN', '待尾款'),
+            ('FINE','尾款已到'),
+            ('END','完成')
         )
 
     def queryset(self, request, queryset):
@@ -201,9 +205,13 @@ class ProjectAdmin(admin.ModelAdmin):
     contract_name.short_description = '项目名称'
 
     def status(self, obj):
-        if is_period_income(obj.contract, 'FIS') > 0:
+        if not is_period_income(obj.contract, 'FIS') <= 0 and is_period_income(obj.contract, 'FIS')!=0.001:#mm.Contract表中的FIS>0
             return '待首款'
-        if obj.ana_end_date and is_period_income(obj.contract, 'FIN') > 0:
+        if obj.data_date:
+            return '已完成'
+        if obj.ana_end_date and is_period_income(obj.contract, 'FIN') <= 0 :
+            return '尾款已到'
+        if obj.ana_end_date and not is_period_income(obj.contract, 'FIN') <= 0 and is_period_income(obj.contract, 'FIN') != 0.001:
             return '待尾款'
         if obj.ana_start_date and not obj.ana_end_date:
             return '分析中'
@@ -215,7 +223,7 @@ class ProjectAdmin(admin.ModelAdmin):
             return '质检中'
         if ExtTask.objects.filter(sample__project=obj).filter(result=None).count():
             return '提取中'
-        if is_period_income(obj.contract, 'FIS') == 0:
+        if is_period_income(obj.contract, 'FIS') == 0 or is_period_income(obj.contract, 'FIN') == 0.001 or is_period_income(obj.contract, 'FIS') == 0.001:
             return '待处理'
     status.short_description = '状态'
 
