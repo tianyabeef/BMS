@@ -12,7 +12,6 @@ from django.contrib.admin.views.main import ChangeList
 from django.db.models import Sum
 from django.contrib.auth.models import User
 
-
 class InvoiceForm(forms.ModelForm):
     # 开票金额与合同对应款期额校验 #22
     def clean_amount(self):
@@ -115,12 +114,11 @@ class SaleListFilter(admin.SimpleListFilter):
             if self.value() == i.username:
                 return queryset.filter(salesman=i)
 
-
 class ContractAdmin(admin.ModelAdmin):
     """
     Admin class for Contract
     """
-    list_display = ('contract_number', 'name', 'type', 'salesman_name', 'price', 'range', 'total', 'fis_income',
+    list_display = ('contract_number', 'name', 'type', 'salesman_name', 'price', 'range', 'all_amount', 'fis_income',
                     'fin_income', 'send_date', 'tracking_number', 'receive_date', 'file_link')
     inlines = [
         InvoiceInline,
@@ -128,7 +126,7 @@ class ContractAdmin(admin.ModelAdmin):
     ordering = ['-id']
     fieldsets = (
         ('基本信息', {
-            'fields': ('contract_number', 'name', 'type', 'salesman', ('price', 'range'), ('fis_amount', 'fin_amount'))
+            'fields': ('contract_number', 'name', 'type', 'salesman', ('price', 'range'), ('fis_amount', 'fin_amount','all_amount'))
         }),
         ('邮寄信息', {
             'fields': ('tracking_number','send_date','receive_date')
@@ -149,11 +147,11 @@ class ContractAdmin(admin.ModelAdmin):
         return obj.salesman
     salesman_name.short_description = '业务员'
 
-    def total(self, obj):
-        # 总款计算并显示
-        amount = obj.fis_amount + obj.fin_amount
-        return amount
-    total.short_description = '总款'
+    # def total(self, obj):#总款不再计算，直接输入
+    #     # 总款计算并显示
+    #     amount = obj.fis_amount + obj.fin_amount
+    #     return amount
+    # total.short_description = '总款'
 
     def fis_income(self, obj):
         # 首款到账信息显示
