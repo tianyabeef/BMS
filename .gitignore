@@ -3,3 +3,4 @@ dev.db
 .git/
 .idea/
 BMS/settings.py
+settings.py

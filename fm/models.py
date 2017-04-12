@@ -13,10 +13,19 @@ class Invoice(models.Model):
     income_date = models.DateField('到账日期', null=True)
     income = models.DecimalField('到账金额',null=True,max_digits=12,decimal_places=2)
     tax_amount = models.DecimalField('开票税率', max_digits=9, decimal_places=2)
+    invoice_file = models.FileField('电子发票', upload_to='uploadsInvoice/%Y/%m',null=True)
 
     class Meta:
         verbose_name = '发票管理'
         verbose_name_plural = '发票管理'
+
+    def file_link(self):
+        if self.invoice_file:
+            return "<a href='%s'>下载</a>" % (self.invoice_file.url,)
+        else:
+            return "未上传"
+    file_link.short_description = "电子发票"
+    file_link.allow_tags = True
 
     def __str__(self):
         return '%s' % self.invoice_code

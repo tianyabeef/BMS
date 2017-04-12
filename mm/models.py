@@ -19,7 +19,7 @@ class Contract(models.Model):
     name = models.CharField('合同名', max_length=100)
     type = models.IntegerField(
         '类型',
-        choices=TYPE_CHOICES,blank=True
+        choices=TYPE_CHOICES
     )
     salesman = models.ForeignKey(User, verbose_name='业务员')
     price = models.DecimalField('单价', max_digits=7, decimal_places=2,blank=True)

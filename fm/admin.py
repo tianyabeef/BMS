@@ -107,9 +107,9 @@ class InvoiceAdmin(ImportExportActionModelAdmin):
     resource_class = InvoiceInfoResource
     list_display = ('invoice_contract_number', 'invoice_contract_name', 'contract_amount', 'salesman_name',
                     'contract_type', 'invoice_period', 'invoice_title', 'invoice_amount', 'income_date',
-                    'bill_receivable', 'invoice_code', 'date', 'tracking_number', 'send_date')
+                    'bill_receivable', 'invoice_code', 'date', 'tracking_number', 'send_date','file_link')
     list_display_links = ['invoice_title', 'invoice_amount']
-    search_fields = ['invoice__title']
+    search_fields = ['invoice__title','invoice_code']
     inlines = [
         BillInline,
     ]
@@ -118,7 +118,7 @@ class InvoiceAdmin(ImportExportActionModelAdmin):
            'fields': ('invoice_title', 'invoice_amount','invoice_type','invoice_content', 'invoice_note')
         }),
         ('开票信息', {
-            'fields': ('invoice_code','tax_amount','date')
+            'fields': ('invoice_code','tax_amount','date','invoice_file')
         }),
         ('邮寄信息', {
             'fields': ('tracking_number','send_date')
@@ -244,7 +244,7 @@ class InvoiceAdmin(ImportExportActionModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         if not request.user.has_perm('fm.add_invoice'):
-            return ['invoice_title', 'invoice_amount','invoice_type','invoice_content', 'invoice_note', 'invoice_code', 'tracking_number']
+            return ['invoice_title', 'invoice_amount','invoice_type','invoice_content', 'invoice_note', 'invoice_code', 'tracking_number','tax_amount','date','invoice_file']
         return ['invoice_title', 'invoice_amount', 'invoice_type','invoice_content','invoice_note']
 
     def get_formsets_with_inlines(self, request, obj=None):
