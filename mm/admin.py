@@ -80,7 +80,7 @@ class InvoiceInline(admin.StackedInline):
     model = Invoice
     formset = InvoiceInlineFormSet
     extra = 1
-    fields = ('title', 'period', 'amount','type','content', 'note')
+    fields = ('title','issuingUnit','period', 'amount','type','content', 'note')
 
 
 class ContractChangeList(ChangeList):

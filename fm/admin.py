@@ -31,27 +31,29 @@ class InvoiceInfoResource(resources.ModelResource):
     contract_salesman = fields.Field(column_name='销售人员')
     invoice_contract_number = fields.Field(column_name='合同号',attribute='invoice__contract',widget=ForeignKeyWidget(Contract, 'contract_number'))
     contract_name = fields.Field(column_name='项目',attribute='invoice__contract',widget=ForeignKeyWidget(Contract, 'name'))
-    invoice_title = fields.Field(attribute='invoice__title', column_name="开票单位")
+    invoice_title = fields.Field(column_name="发票抬头",attribute='invoice__title')
     contract_price = fields.Field(column_name='合同单价',attribute='invoice__contract',widget=ForeignKeyWidget(Contract, 'price'))
     contract_range = fields.Field(column_name='价格区间')
     contract_amount = fields.Field(column_name='合同金额')
     contract_income = fields.Field(column_name='回款金额',attribute='income')
+    invoice_amount = fields.Field(column_name='发票金额',attribute='invoice_amount')
     contract_income_date = fields.Field(column_name='到款日期',attribute='income_date')
-    invoice_code = fields.Field(attribute='invoice_code',column_name='发票号码')
+    invoice_code = fields.Field(column_name='发票号码',attribute='invoice_code')
     invoice_type = fields.Field(column_name='发票类型')
-    invoice_tax_amount = fields.Field(attribute='tax_amount',column_name='开票税率')
-    invoice_content = fields.Field(attribute='invoice__content',column_name='开票内容')
+    invoice_tax_amount = fields.Field(column_name='开票税率',attribute='tax_amount')
+    invoice_content = fields.Field(column_name='开票内容',attribute='invoice__content')
+    invoice_issuingUnit = fields.Field(column_name='开票单位',attribute='invoice__issuingUnit')
 
 
     class Meta:
         model = Invoice
         skip_unchanged = True
         fields = ('contract_salesman','invoice_contract_number','contract_name','invoice_title','contract_price','contract_range',
-                  'contract_amount','contract_income','contract_income_date','invoice_code',
-                  'invoice_type','invoice_tax_amount','invoice_content')
+                  'contract_amount','invoice_amount','contract_income','contract_income_date','invoice_code',
+                  'invoice_type','invoice_tax_amount','invoice_content','invoice_issuingUnit')
         export_order = ('contract_salesman','invoice_contract_number','contract_name','invoice_title','contract_price','contract_range',
-                        'contract_amount','contract_income','contract_income_date','invoice_code',
-                        'invoice_type','invoice_tax_amount','invoice_content')
+                        'contract_amount','invoice_amount','contract_income','contract_income_date','invoice_code',
+                        'invoice_type','invoice_tax_amount','invoice_content','invoice_issuingUnit')
 
     def dehydrate_contract_amount(self, invoice):
         return '%.2f' % (invoice.invoice.contract.fis_amount+invoice.invoice.contract.fin_amount)
@@ -61,6 +63,8 @@ class InvoiceInfoResource(resources.ModelResource):
         return invoice.invoice.contract.get_range_display()
     def dehydrate_invoice_type(self,invoice):
         return invoice.invoice.get_type_display()
+    def dehydrate_invoice_amount(self,invoice):
+        return '%.2f' % (invoice.invoice.amount)
 class BillInlineFormSet(BaseInlineFormSet):
     def clean(self):
         super(BillInlineFormSet, self).clean()
