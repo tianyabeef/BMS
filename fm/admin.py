@@ -251,6 +251,12 @@ class InvoiceAdmin(ImportExportActionModelAdmin):
             return ['invoice_title', 'invoice_amount','invoice_type','invoice_content', 'invoice_note', 'invoice_code', 'tracking_number','tax_amount','date','invoice_file']
         return ['invoice_title', 'invoice_amount', 'invoice_type','invoice_content','invoice_note']
 
+    def get_inline_instances(self, request, obj=None):
+        #超级用户修改发票管理的时候就把bill的内联table就不添加了，
+        if request.user.is_superuser:
+            self.inlines = []
+        return super(InvoiceAdmin, self).get_inline_instances(request, obj)
+
     def get_formsets_with_inlines(self, request, obj=None):
         # add page不显示BillInline
         for inline in self.get_inline_instances(request, obj):
