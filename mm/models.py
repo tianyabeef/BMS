@@ -22,7 +22,7 @@ class Contract(models.Model):
         choices=TYPE_CHOICES
     )
     salesman = models.ForeignKey(User, verbose_name='业务员')
-    price = models.DecimalField('单价', max_digits=7, decimal_places=2,blank=True)
+    price = models.DecimalField('单价', max_digits=7, decimal_places=2, blank=True)
     range = models.IntegerField(
         '价格区间',
         choices=RANGE_CHOICES,blank=True
@@ -62,18 +62,22 @@ class Invoice(models.Model):
         ('CC', '普票'),
         ('SC', '专票'),
     )
+    ISSUING_UNIT_CHOICES = (
+        ('sh', '上海锐翌'),
+        ('hz', '杭州拓宏'),
+    )
     contract = models.ForeignKey(
         Contract,
         verbose_name='合同',
         on_delete=models.CASCADE,
     )
-    title = models.CharField('发票抬头', max_length=25)
-    issuingUnit = models.CharField('开票单位', max_length=25)
+    title = models.CharField('发票抬头', max_length=25,null=True)
+    issuingUnit = models.CharField('开票单位',choices=ISSUING_UNIT_CHOICES, max_length=25,default='sh')
     period = models.CharField('款期', max_length=3, choices=PERIOD_CHOICES, default='FIS')
     amount = models.DecimalField('发票金额', max_digits=9, decimal_places=2)
     type = models.CharField('发票类型', max_length=3, choices=INVOICE_TYPE_CHOICES, default='CC')
-    content = models.TextField('发票内容')
-    note = models.TextField('备注')
+    content = models.TextField('发票内容',null=True)
+    note = models.TextField('备注',null=True)
     submit = models.NullBooleanField('提交开票', null=True)
 
     class Meta:
