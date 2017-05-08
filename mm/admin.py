@@ -11,6 +11,14 @@ from daterange_filter.filter import DateRangeFilter
 from django.contrib.admin.views.main import ChangeList
 from django.db.models import Sum
 from django.contrib.auth.models import User
+from import_export import resources
+from import_export.admin import ImportExportActionModelAdmin
+from import_export import fields
+from import_export.widgets import ForeignKeyWidget
+from notification.signals import notify
+from operator import is_not
+from functools import partial
+from django.utils import formats
 
 class InvoiceForm(forms.ModelForm):
     # 开票金额与合同对应款期额校验 #22
@@ -50,6 +58,9 @@ class InvoiceAdmin(admin.ModelAdmin):
                 i = fm_Invoice.objects.create(invoice=obj)
                 obj.submit = True
                 obj.save()
+                #新的开票申请 通知财务部5
+                for j in User.objects.filter(groups__id=5):
+                    notify.send(request.user, recipient=j, verb='提交了开票申请',description="合同名称：%s %s"%(obj.contract.name,obj.period))
             else:
                 n += 1
         if i:
@@ -114,7 +125,31 @@ class SaleListFilter(admin.SimpleListFilter):
             if self.value() == i.username:
                 return queryset.filter(salesman=i)
 
-class ContractAdmin(admin.ModelAdmin):
+class ContractResource(resources.ModelResource):
+    #按照合同号导出
+    contract_number = fields.Field(column_name="合同号",attribute="contract_number")
+    contract_name = fields.Field(column_name="合同名称",attribute="name")
+    receive_date = fields.Field(column_name="合同寄到日",attribute="receive_date")
+    invoice_times = fields.Field(column_name="开票次数")
+    invoice_date = fields.Field(column_name="开票日期")
+    invoice_income = fields.Field(column_name="回款金额")
+    invoice_income_date = fields.Field(column_name="回款时间")
+    class Meta:
+        model = Contract
+        skip_unchanged = True
+        fields = ('contract_number','contract_name','receive_date','invoice_times','invoice_date','invoice_income','invoice_income_date')
+        export_order = ('contract_number','contract_name','receive_date','invoice_times','invoice_date','invoice_income','invoice_income_date')
+    def dehydrate_invoice_times(self, contract):
+        return len(fm_Invoice.objects.filter(invoice__contract=contract))
+    def dehydrate_invoice_date(self,contract):
+        return  [formats.date_format(date, 'Y-m-d') for date in list(filter(partial(is_not, None),fm_Invoice.objects.filter(invoice__contract=contract).values_list('date',flat=True)))]
+    def dehydrate_invoice_income(self, contract):
+        return [float(income) for income in list(filter(partial(is_not, None),fm_Invoice.objects.filter(invoice__contract=contract).values_list('income',flat=True)))]
+    def dehydrate_invoice_income_date(self, contract):
+        return [formats.date_format(income_date, 'Y-m-d') for income_date in list(filter(partial(is_not, None),fm_Invoice.objects.filter(invoice__contract=contract).values_list('income_date',flat=True)))]
+
+class ContractAdmin(ImportExportActionModelAdmin):
+    resource_class = ContractResource
     """
     Admin class for Contract
     """

@@ -3,9 +3,11 @@ from .models import SampleInfo, QcTask, ExtTask, LibTask
 from django import forms
 from django.contrib import messages
 from import_export import resources
-from import_export.admin import ImportExportModelAdmin
+from import_export.admin import ImportExportActionModelAdmin
 from datetime import date, timedelta
 from django.utils.html import format_html
+from notification.signals import notify
+from import_export import fields
 
 
 def add_business_days(from_date, number_of_days):
@@ -24,10 +26,24 @@ def add_business_days(from_date, number_of_days):
 
 
 class SampleInfoResource(resources.ModelResource):
+    project_name = fields.Field(column_name="项目")
+    type = fields.Field(column_name="样品类型",attribute="type")
+    species = fields.Field(column_name="物种",attribute="species")
+    name = fields.Field(column_name="样品名称",attribute="name")
+    volume = fields.Field(column_name="体积uL",attribute="volume")
+    concentration = fields.Field(column_name="浓度ng/uL",attribute="concentration")
+    receive_date = fields.Field(column_name="收样日期",attribute="receive_date")
+    # check = fields.Field(column_name="样品核对",attribute="check")
+    # note = fields.Field(column_name="备注",attribute="note")
     class Meta:
         model = SampleInfo
-        exclude = ('check', 'note')
         skip_unchanged = True
+        fields = ('project_name','type','species','name','volume','concentration',
+                  'receive_date')
+        export_order = ('project_name','type','species','name','volume','concentration',
+                  'receive_date',)
+    def dehydrate_project_name(self, sampleinfo):
+        return sampleinfo.project.contract.name
 
 
 class SampleInfoForm(forms.ModelForm):
@@ -37,11 +53,11 @@ class SampleInfoForm(forms.ModelForm):
         return self.cleaned_data['note']
 
 
-class SampleInfoAdmin(ImportExportModelAdmin):
+class SampleInfoAdmin(ImportExportActionModelAdmin):
+    resources_class = SampleInfoResource
     form = SampleInfoForm
     list_display = ['contract', 'project', 'type', 'species', 'name', 'volume', 'concentration', 'receive_date',
                     'check', 'note']
-    resources_class = SampleInfoResource
     list_display_links = ['name']
     list_filter = ['check']
     actions = ['make_pass']
@@ -65,19 +81,20 @@ class SampleInfoAdmin(ImportExportModelAdmin):
         rows_updated = queryset.update(check=True)
         if rows_updated:
             self.message_user(request, '%s 个样品核验通过' % rows_updated)
+            #样品信息核对，提醒相应销售人员
+            notify.send(request.user, recipient=queryset[0].project.contract.salesman, verb='核对了样品信息',description="项目名称：%s 此次核对的样品数量：%s"%(queryset[0].project.name,rows_updated))
         else:
             self.message_user(request, '%s 未成功操作标记核验通过' % rows_updated, level=messages.ERROR)
     make_pass.short_description = '标记所选样品核验通过'
 
     def save_model(self, request, obj, form, change):
-        if obj.check is False:
-            if not obj.note:
-                messages.set_level(request, messages.ERROR)
-                self.message_user(request, '不通过核验时需要进行备注', level=messages.ERROR)
-            else:
-                obj.save()
+        if obj.check is False and not obj.note:
+            messages.set_level(request, messages.ERROR)
+            self.message_user(request, '不通过核验时需要进行备注', level=messages.ERROR)
         else:
             obj.save()
+            #样品信息核对，提醒相应销售人员
+            notify.send(request.user, recipient=obj.project.contract.salesman, verb='核对了样品信息',description="项目名称：%s 样品名称：%s"%(obj.project.name,obj.project.contract.name))
 
     def get_queryset(self, request):
         qs = super(SampleInfoAdmin, self).get_queryset(request)
@@ -162,6 +179,8 @@ class ExtTaskAdmin(admin.ModelAdmin):
         rows_updated = queryset.update(result=True, date=date.today(), staff=request.user)
         if rows_updated:
             self.message_user(request, '%s 个样品提取成功' % rows_updated)
+            #样品提取成，提醒相应销售人员
+            notify.send(request.user, recipient=queryset[0].project.contract.salesman, verb='提取样品成功',description="项目名称：%s 此次核对的样品数量：%s"%(queryset[0].project.name,rows_updated))
         else:
             self.message_user(request, '%s 未能操作标记为提取成功' % rows_updated, level=messages.ERROR)
     make_pass.short_description = '标记所选样品提取成功'
@@ -174,6 +193,8 @@ class ExtTaskAdmin(admin.ModelAdmin):
             obj.date = date.today()
             obj.staff = request.user
         obj.save()
+        #样品提取成功，提醒相应销售人员
+        notify.send(request.user, recipient=obj.project.contract.salesman, verb='核对了样品信息',description="项目名称：%s 样品名称：%s"%(obj.project.name,obj.project.contract.name))
 
     def get_queryset(self, request):
         qs = super(ExtTaskAdmin, self).get_queryset(request)
@@ -258,6 +279,8 @@ class QcTaskAdmin(admin.ModelAdmin):
         rows_updated = queryset.update(result=1, date=date.today(), staff=request.user)
         if rows_updated:
             self.message_user(request, '%s 个样品质检合格' % rows_updated)
+            #样品质检合格，提醒相应销售人员
+            notify.send(request.user, recipient=queryset[0].project.contract.salesman, verb='样品质检合格',description="项目名称：%s 此次核对的样品数量：%s"%(queryset[0].project.name,rows_updated))
         else:
             self.message_user(request, '%s 未能操作标记为质检合格' % rows_updated, level=messages.ERROR)
     make_pass.short_description = '标记所选样品质检合格'
@@ -274,6 +297,8 @@ class QcTaskAdmin(admin.ModelAdmin):
             obj.date = date.today()
             obj.staff = request.user
         obj.save()
+        #样品质检合格，提醒相应销售人员
+        notify.send(request.user, recipient=obj.project.contract.salesman, verb='样品质检合格',description="项目名称：%s 样品名称：%s"%(obj.project.name,obj.project.contract.name))
 
     def get_queryset(self, request):
         qs = super(QcTaskAdmin, self).get_queryset(request)
@@ -359,6 +384,8 @@ class LibTaskAdmin(admin.ModelAdmin):
         rows_updated = queryset.update(result=True, date=date.today(), staff=request.user)
         if rows_updated:
             self.message_user(request, '%s 个样品建库合格' % rows_updated)
+            #样品建库合格，提醒相应销售人员
+            notify.send(request.user, recipient=queryset[0].project.contract.salesman, verb='样品建库合格',description="项目名称：%s 此次核对的样品数量：%s"%(queryset[0].project.name,rows_updated))
         else:
             self.message_user(request, '%s 未能操作标记为建库合格' % rows_updated, level=messages.ERROR)
     make_pass.short_description = '标记所选样品建库合格'
@@ -380,7 +407,8 @@ class LibTaskAdmin(admin.ModelAdmin):
             obj.date = date.today()
             obj.staff = request.user
         obj.save()
-
+        #样品建库合格，提醒相应销售人员
+        notify.send(request.user, recipient=obj.project.contract.salesman, verb='样品建库合格',description="项目名称：%s 样品名称：%s"%(obj.project.name,obj.project.contract.name))
     def get_queryset(self, request):
         qs = super(LibTaskAdmin, self).get_queryset(request)
         if request.user.is_superuser or request.user.has_perm('lims.add_libtask'):

@@ -12,6 +12,7 @@ from import_export.admin import ImportExportActionModelAdmin
 from import_export import fields
 from import_export.widgets import ForeignKeyWidget
 from mm.models import Contract
+from notification.signals import notify
 
 
 
@@ -36,7 +37,7 @@ class InvoiceInfoResource(resources.ModelResource):
     contract_range = fields.Field(column_name='价格区间')
     contract_amount = fields.Field(column_name='合同金额')
     contract_income = fields.Field(column_name='回款金额',attribute='income')
-    invoice_amount = fields.Field(column_name='发票金额',attribute='invoice_amount')
+    invoice_amount = fields.Field(column_name='发票金额')
     contract_income_date = fields.Field(column_name='到款日期',attribute='income_date')
     invoice_code = fields.Field(column_name='发票号码',attribute='invoice_code')
     invoice_type = fields.Field(column_name='发票类型')
@@ -203,6 +204,8 @@ class InvoiceAdmin(ImportExportActionModelAdmin):
         elif not obj.tracking_number:
             obj.send_date = None
         obj.save()
+        #开出发票 通知相应销售人员
+        notify.send(request.user, recipient=obj.invoice.contract.salesman, verb='开出发票',description="发票号码：%s 开票金额：%s"%(obj.invoice_code,obj.invoice.amount))
 
     def save_formset(self, request, form, formset, change):
         instances = formset.save(commit=False)
@@ -220,6 +223,11 @@ class InvoiceAdmin(ImportExportActionModelAdmin):
                 formset.save_m2m()
                 obj_invoice.income = sum_income
                 obj_invoice.save()
+                #新的到账 通知财务部5
+                for j in User.objects.filter(groups__id=5):
+                    notify.send(request.user, recipient=j, verb='填写一笔新到账',description="发票号：%s 到账金额：%s"%(obj_invoice,sum_income))
+                #新到账 通知相应的销售
+                notify.send(request.user,recipient=obj.invoice.invoice.contract.salesman,verb='填写一笔新到账',description="发票号：%s 到账金额：%s"%(obj_invoice,sum_income))
             else:
                 messages.set_level(request, messages.ERROR)
                 self.message_user(request, '进账总额 %.2f 超过开票金额 %.2f' % (sum_income, invoice_amount),
@@ -252,7 +260,7 @@ class InvoiceAdmin(ImportExportActionModelAdmin):
         return ['invoice_title', 'invoice_amount', 'invoice_type','invoice_content','invoice_note']
 
     def get_inline_instances(self, request, obj=None):
-        #超级用户修改发票管理的时候就把bill的内联table就不添加了，
+        #超级用户修改发票管理的时候,存在bill的内联table所有不添加了，
         if request.user.is_superuser:
             self.inlines = []
         return super(InvoiceAdmin, self).get_inline_instances(request, obj)
@@ -267,14 +275,23 @@ class InvoiceAdmin(ImportExportActionModelAdmin):
             yield inline.get_formset(request, obj), inline
 
     def get_queryset(self, request):
-        # 只允许管理员和拥有该模型删除权限的人员才能查看所有
+        # 只允许管理员和拥有该模型删除权限的人员，销售总监才能查看所有
+        haved_perm = False
+        for group in request.user.groups.all():
+            if group.id == 7:
+                haved_perm=True
         qs = super(InvoiceAdmin, self).get_queryset(request)
-        if request.user.is_superuser or request.user.has_perm('fm.delete_invoice'):
+        if request.user.is_superuser or request.user.has_perm('fm.delete_invoice') or haved_perm:
             return qs
         return qs.filter(invoice__contract__salesman=request.user)
 
     def get_list_filter(self, request):
-        if request.user.is_superuser or request.user.has_perm('fm.delete_invoice'):
+        #销售总监，admin，有删除权限的人可以看到salelistFilter
+        haved_perm = False
+        for group in request.user.groups.all():
+            if group.id == 7:
+                haved_perm=True
+        if request.user.is_superuser or request.user.has_perm('fm.delete_invoice') or haved_perm:
             return [
                 SaleListFilter,
                 'invoice__contract__type',
@@ -286,6 +303,11 @@ class InvoiceAdmin(ImportExportActionModelAdmin):
             ('income_date', DateRangeFilter),
             ('date', DateRangeFilter)
         ]
+
+    def lookup_allowed(self, lookup, *args, **kwargs):
+        if lookup == 'invoice__contract__type__exact':
+            return True
+        return super(InvoiceAdmin, self).lookup_allowed(lookup, *args, **kwargs)
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
         extra_context = extra_context or {}
