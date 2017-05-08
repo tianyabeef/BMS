@@ -285,7 +285,8 @@ class ContractAdmin(ExportActionModelAdmin):
             if group.id == 7:
                 haved_perm=True
         qs = super(ContractAdmin, self).get_queryset(request)
-        if request.user.is_superuser or request.user.has_perm('mm.add_contract') or haved_perm:
+        #TODO 给财务开通查询所有合同的权限，暂时先用
+        if request.user.is_superuser or request.user.has_perm('mm.add_contract') or haved_perm or request.user.id == 40 or request.user.id == 6:
             return qs
         return qs.filter(salesman=request.user)
 
