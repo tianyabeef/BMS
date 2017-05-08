@@ -8,7 +8,7 @@ from django.forms.models import BaseInlineFormSet
 from daterange_filter.filter import DateRangeFilter
 from django.contrib.auth.models import User
 from import_export import resources
-from import_export.admin import ImportExportActionModelAdmin
+from import_export.admin import ImportExportActionModelAdmin,ExportActionModelAdmin
 from import_export import fields
 from import_export.widgets import ForeignKeyWidget
 from mm.models import Contract
@@ -107,8 +107,27 @@ class SaleListFilter(admin.SimpleListFilter):
             if self.value() == i.username:
                 return queryset.filter(invoice__contract__salesman=i)
 
+class SaleListFilterSale(admin.SimpleListFilter):
+    title = '业务员'
+    parameter_name = 'Sale'
 
-class InvoiceAdmin(ImportExportActionModelAdmin):
+    def lookups(self, request, model_admin):
+        qs_sale = User.objects.filter(groups__id=3)
+        value = ['sale'] + list(qs_sale.values_list('username', flat=True))
+        label = ['销售'] + ['——' + i.last_name + i.first_name for i in qs_sale]
+        return tuple(zip(value, label))
+
+    def queryset(self, request, queryset):
+        if self.value() == 'sale':
+            return queryset.filter(invoice__contract__salesman__in=list(User.objects.filter(groups__id=3)))
+        if self.value() == 'company':
+            return queryset.filter(invoice__contract__salesman__in=list(User.objects.filter(groups__id=6)))
+        qs = User.objects.filter(groups__in=[3, 6])
+        for i in qs:
+            if self.value() == i.username:
+                return queryset.filter(invoice__contract__salesman=i)
+
+class InvoiceAdmin(ExportActionModelAdmin):
     resource_class = InvoiceInfoResource
     list_display = ('invoice_contract_number', 'invoice_contract_name', 'contract_amount', 'salesman_name',
                     'contract_type', 'invoice_period', 'invoice_title', 'invoice_amount', 'income_date',
@@ -243,10 +262,11 @@ class InvoiceAdmin(ImportExportActionModelAdmin):
         return InvoiceChangeList
 
     def get_actions(self, request):
-        # 无删除或新增权限人员取消actions
+        # 无删除或新增权限人员取消actions,销售总监有export_admin_action权限
         actions = super(InvoiceAdmin, self).get_actions(request)
         if not request.user.has_perm('fm.delete_invoice'):
-            actions = None
+            # actions = None
+            del actions['delete_selected']
         if not request.user.has_perm('fm.add_invoice'):
             if not actions:
                 actions = None
@@ -291,9 +311,16 @@ class InvoiceAdmin(ImportExportActionModelAdmin):
         for group in request.user.groups.all():
             if group.id == 7:
                 haved_perm=True
-        if request.user.is_superuser or request.user.has_perm('fm.delete_invoice') or haved_perm:
+        if request.user.is_superuser or request.user.has_perm('fm.delete_invoice'):
             return [
                 SaleListFilter,
+                'invoice__contract__type',
+                ('income_date', DateRangeFilter),
+                ('date', DateRangeFilter)
+            ]
+        elif haved_perm:
+            return [
+                SaleListFilterSale,
                 'invoice__contract__type',
                 ('income_date', DateRangeFilter),
                 ('date', DateRangeFilter)

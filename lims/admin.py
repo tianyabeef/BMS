@@ -32,15 +32,15 @@ class SampleResource(resources.ModelResource):
     volume = fields.Field(column_name="体积uL",attribute="volume")
     concentration = fields.Field(column_name="浓度ng/uL",attribute="concentration")
     receive_date = fields.Field(column_name="收样日期",attribute="receive_date")
-    # check = fields.Field(column_name="样品核对",attribute="check")
-    # note = fields.Field(column_name="备注",attribute="note")
+    check = fields.Field(column_name="样品核对",attribute="check")
+    note = fields.Field(column_name="备注",attribute="note")
     class Meta:
         model = SampleInfo
         skip_unchanged = True
         fields = ('project_name','type','species','name','volume','concentration',
-                  'receive_date')
+                  'receive_date','check','note')
         export_order = ('project_name','type','species','name','volume','concentration',
-                  'receive_date',)
+                  'receive_date','check','note')
     def dehydrate_project_name(self, sampleinfo):
         return sampleinfo.project.contract.name
 
