@@ -2,13 +2,12 @@ from django.contrib import admin
 from .models import SampleInfo, QcTask, ExtTask, LibTask
 from django import forms
 from django.contrib import messages
-from import_export import resources
-from import_export.admin import ImportExportActionModelAdmin
 from datetime import date, timedelta
 from django.utils.html import format_html
 from notification.signals import notify
 from import_export import fields
-
+from import_export import resources
+from import_export.admin import ImportExportActionModelAdmin
 
 def add_business_days(from_date, number_of_days):
     to_date = from_date
@@ -25,7 +24,7 @@ def add_business_days(from_date, number_of_days):
     return to_date
 
 
-class SampleInfoResource(resources.ModelResource):
+class SampleResource(resources.ModelResource):
     project_name = fields.Field(column_name="项目")
     type = fields.Field(column_name="样品类型",attribute="type")
     species = fields.Field(column_name="物种",attribute="species")
@@ -54,7 +53,7 @@ class SampleInfoForm(forms.ModelForm):
 
 
 class SampleInfoAdmin(ImportExportActionModelAdmin):
-    resources_class = SampleInfoResource
+    resource_class = SampleResource
     form = SampleInfoForm
     list_display = ['contract', 'project', 'type', 'species', 'name', 'volume', 'concentration', 'receive_date',
                     'check', 'note']
