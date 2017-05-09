@@ -246,7 +246,7 @@ class InvoiceAdmin(ExportActionModelAdmin):
                 for j in User.objects.filter(groups__id=5):
                     notify.send(request.user, recipient=j, verb='填写一笔新到账',description="发票号：%s 到账金额：%s"%(obj_invoice,sum_income))
                 #新到账 通知相应的销售
-                notify.send(request.user,recipient=obj.invoice.invoice.contract.salesman,verb='填写一笔新到账',description="发票号：%s 到账金额：%s"%(obj_invoice,sum_income))
+                notify.send(request.user,recipient=obj_invoice.invoice.contract.salesman,verb='填写一笔新到账',description="发票号：%s 到账金额：%s"%(obj_invoice,sum_income))
             else:
                 messages.set_level(request, messages.ERROR)
                 self.message_user(request, '进账总额 %.2f 超过开票金额 %.2f' % (sum_income, invoice_amount),
