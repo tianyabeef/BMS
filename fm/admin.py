@@ -107,25 +107,25 @@ class SaleListFilter(admin.SimpleListFilter):
             if self.value() == i.username:
                 return queryset.filter(invoice__contract__salesman=i)
 
-class SaleListFilterSale(admin.SimpleListFilter):
-    title = '业务员'
-    parameter_name = 'Sale'
-
-    def lookups(self, request, model_admin):
-        qs_sale = User.objects.filter(groups__id=3)
-        value = ['sale'] + list(qs_sale.values_list('username', flat=True))
-        label = ['销售'] + ['——' + i.last_name + i.first_name for i in qs_sale]
-        return tuple(zip(value, label))
-
-    def queryset(self, request, queryset):
-        if self.value() == 'sale':
-            return queryset.filter(invoice__contract__salesman__in=list(User.objects.filter(groups__id=3)))
-        if self.value() == 'company':
-            return queryset.filter(invoice__contract__salesman__in=list(User.objects.filter(groups__id=6)))
-        qs = User.objects.filter(groups__in=[3, 6])
-        for i in qs:
-            if self.value() == i.username:
-                return queryset.filter(invoice__contract__salesman=i)
+# class SaleListFilterSale(admin.SimpleListFilter):
+#     title = '业务员'
+#     parameter_name = 'Sale'
+#
+#     def lookups(self, request, model_admin):
+#         qs_sale = User.objects.filter(groups__id=3)
+#         value = ['sale'] + list(qs_sale.values_list('username', flat=True))
+#         label = ['销售'] + ['——' + i.last_name + i.first_name for i in qs_sale]
+#         return tuple(zip(value, label))
+#
+#     def queryset(self, request, queryset):
+#         if self.value() == 'sale':
+#             return queryset.filter(invoice__contract__salesman__in=list(User.objects.filter(groups__id=3)))
+#         if self.value() == 'company':
+#             return queryset.filter(invoice__contract__salesman__in=list(User.objects.filter(groups__id=6)))
+#         qs = User.objects.filter(groups__in=[3, 6])
+#         for i in qs:
+#             if self.value() == i.username:
+#                 return queryset.filter(invoice__contract__salesman=i)
 
 class InvoiceAdmin(ExportActionModelAdmin):
     resource_class = InvoiceInfoResource
@@ -311,20 +311,20 @@ class InvoiceAdmin(ExportActionModelAdmin):
         for group in request.user.groups.all():
             if group.id == 7:
                 haved_perm=True
-        if request.user.is_superuser or request.user.has_perm('fm.delete_invoice'):
+        if request.user.is_superuser or request.user.has_perm('fm.delete_invoice') or haved_perm:
             return [
                 SaleListFilter,
                 'invoice__contract__type',
                 ('income_date', DateRangeFilter),
                 ('date', DateRangeFilter)
             ]
-        elif haved_perm:
-            return [
-                SaleListFilterSale,
-                'invoice__contract__type',
-                ('income_date', DateRangeFilter),
-                ('date', DateRangeFilter)
-            ]
+        # elif haved_perm:
+        #     return [
+        #         SaleListFilterSale,
+        #         'invoice__contract__type',
+        #         ('income_date', DateRangeFilter),
+        #         ('date', DateRangeFilter)
+        #     ]
         return [
             'invoice__contract__type',
             ('income_date', DateRangeFilter),
