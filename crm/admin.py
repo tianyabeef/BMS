@@ -84,7 +84,10 @@ class IntentionAdmin(admin.ModelAdmin):
     customer_name.short_description = '客户姓名'
 
     def status(self, obj):
-        return IntentionRecord.objects.filter(intention_id=obj.id).last().status
+        if IntentionRecord.objects.filter(intention_id=obj.id).last():
+            return IntentionRecord.objects.filter(intention_id=obj.id).last().status
+        else:
+            return "无"
     status.short_description = '最新进展'
 
     def get_queryset(self, request):
