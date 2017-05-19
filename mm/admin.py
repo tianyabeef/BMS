@@ -155,11 +155,23 @@ class ContractResource(resources.ModelResource):
     invoice_date = fields.Field(column_name="开票日期")
     invoice_income = fields.Field(column_name="回款金额")
     invoice_income_date = fields.Field(column_name="回款时间")
+    contract_type = fields.Field(column_name="类型")
+    contract_salesman = fields.Field(column_name="业务员")
+    contract_price = fields.Field(column_name="单价",attribute="price")
+    contract_range = fields.Field(column_name="价格区间",attribute="range")
+    contract_all_amount = fields.Field(column_name="总款额",attribute="all_amount")
+    contract_fis_amount = fields.Field(column_name="首款",attribute="fis_amount")
+    contract_fin_amount = fields.Field(column_name="尾款",attribute="fin_amount")
+    contract_send_date = fields.Field(column_name="合同寄出日",attribute="send_date")
     class Meta:
         model = Contract
         skip_unchanged = True
-        fields = ('contract_number','contract_name','receive_date','invoice_times','invoice_date','invoice_income','invoice_income_date')
-        export_order = ('contract_number','contract_name','receive_date','invoice_times','invoice_date','invoice_income','invoice_income_date')
+        fields = ('contract_number','contract_name','receive_date','invoice_times','invoice_date','invoice_income',
+                  'invoice_income_date','contract_type','contract_salesman','contract_price','contract_range',
+                  'contract_all_amount','contract_fis_amount','contract_fin_amount','contract_send_date')
+        export_order = ('contract_number','contract_name','receive_date','invoice_times','invoice_date','invoice_income',
+                        'invoice_income_date','contract_type','contract_salesman','contract_price','contract_range',
+                  'contract_all_amount','contract_fis_amount','contract_fin_amount','contract_send_date')
     def dehydrate_invoice_times(self, contract):
         return len(fm_Invoice.objects.filter(invoice__contract=contract))
     def dehydrate_invoice_date(self,contract):
@@ -168,6 +180,12 @@ class ContractResource(resources.ModelResource):
         return [float(income) for income in list(filter(partial(is_not, None),fm_Invoice.objects.filter(invoice__contract=contract).values_list('income',flat=True)))]
     def dehydrate_invoice_income_date(self, contract):
         return [formats.date_format(income_date, 'Y-m-d') for income_date in list(filter(partial(is_not, None),fm_Invoice.objects.filter(invoice__contract=contract).values_list('income_date',flat=True)))]
+    def dehydrate_contract_type(self,contract):
+        return contract.get_type_display()
+    def dehydrate_contract_range(self,contract):
+        return contract.get_range_display()
+    def dehydrate_contract_salesman(self,contract):
+        return "%s%s"%(contract.salesman.last_name,contract.salesman.first_name)
 
 class ContractAdmin(ExportActionModelAdmin):
     resource_class = ContractResource
