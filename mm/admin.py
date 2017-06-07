@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Invoice, Contract
+from .models import Invoice, Contract,InvoiceTitle
 from fm.models import Invoice as fm_Invoice
 from fm.models import Bill
 from django.contrib import messages
@@ -19,6 +19,12 @@ from notification.signals import notify
 from operator import is_not
 from functools import partial
 from django.utils import formats
+class InvoiceTitleAdmin(ExportActionModelAdmin):
+    """
+    Admin class for InvoiceTitle
+    """
+    list_display = ('title', 'tariffItem')
+    fields = ('title', 'tariffItem')
 
 class InvoiceForm(forms.ModelForm):
     # 开票金额与合同对应款期额校验 #22
@@ -45,7 +51,7 @@ class InvoiceAdmin(admin.ModelAdmin):
     list_display = ('contract', 'title', 'period', 'amount', 'note', 'submit')
     actions = ['make_invoice_submit']
     list_display_links = None
-    fields = ('contract', 'title', 'period', 'amount','type','content', 'note')
+    fields = ('contract','title','issuingUnit','period', 'amount','type','content', 'note')
 
     def make_invoice_submit(self, request, queryset):
         """
@@ -91,8 +97,13 @@ class InvoiceInline(admin.StackedInline):
     model = Invoice
     formset = InvoiceInlineFormSet
     extra = 1
-    fields = ('title','issuingUnit','period', 'amount','type','content', 'note')
+    fields = ('title','title_tariffItem','issuingUnit','period', 'amount','type','content', 'note')
+    raw_id_fields = ('title',)
+    readonly_fields = ('title_tariffItem',)
 
+    def title_tariffItem(self, obj):
+        return obj.title.tariffItem
+    title_tariffItem.short_description = '税号'
 
 class ContractChangeList(ChangeList):
     def get_results(self, *args, **kwargs):
@@ -364,3 +375,4 @@ class ContractAdmin(ExportActionModelAdmin):
 
 admin.site.register(Contract, ContractAdmin)
 admin.site.register(Invoice, InvoiceAdmin)
+admin.site.register(InvoiceTitle,InvoiceTitleAdmin)

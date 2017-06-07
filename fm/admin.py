@@ -32,7 +32,7 @@ class InvoiceInfoResource(resources.ModelResource):
     contract_salesman = fields.Field(column_name='销售人员')
     invoice_contract_number = fields.Field(column_name='合同号',attribute='invoice__contract',widget=ForeignKeyWidget(Contract, 'contract_number'))
     contract_name = fields.Field(column_name='项目',attribute='invoice__contract',widget=ForeignKeyWidget(Contract, 'name'))
-    invoice_title = fields.Field(column_name="发票抬头",attribute='invoice__title')
+    invoice_title = fields.Field(column_name="发票抬头")
     contract_price = fields.Field(column_name='合同单价',attribute='invoice__contract',widget=ForeignKeyWidget(Contract, 'price'))
     contract_range = fields.Field(column_name='价格区间')
     contract_amount = fields.Field(column_name='合同金额')
@@ -43,7 +43,7 @@ class InvoiceInfoResource(resources.ModelResource):
     invoice_type = fields.Field(column_name='发票类型')
     invoice_tax_amount = fields.Field(column_name='开票税率',attribute='tax_amount')
     invoice_content = fields.Field(column_name='开票内容',attribute='invoice__content')
-    invoice_issuingUnit = fields.Field(column_name='开票单位',attribute='invoice__issuingUnit')
+    invoice_issuingUnit = fields.Field(column_name='开票单位')
 
 
     class Meta:
@@ -66,6 +66,10 @@ class InvoiceInfoResource(resources.ModelResource):
         return invoice.invoice.get_type_display()
     def dehydrate_invoice_amount(self,invoice):
         return '%.2f' % (invoice.invoice.amount)
+    def dehydrate_invoice_title(self,invoice):
+        return invoice.invoice.title.title
+    def dehydrate_invoice_issuingUnit(self,invoice):
+        return invoice.invoice.get_issuingUnit_display()
 class BillInlineFormSet(BaseInlineFormSet):
     def clean(self):
         super(BillInlineFormSet, self).clean()
@@ -133,13 +137,13 @@ class InvoiceAdmin(ExportActionModelAdmin):
                     'contract_type', 'invoice_period', 'invoice_title', 'invoice_amount', 'income_date',
                     'bill_receivable', 'invoice_code', 'date', 'tracking_number', 'send_date','file_link')
     list_display_links = ['invoice_title', 'invoice_amount']
-    search_fields = ['invoice__title','invoice_code']
+    search_fields = ['invoice_title','invoice_code']
     inlines = [
         BillInline,
     ]
     fieldsets = (
         ('申请信息', {
-           'fields': ('invoice_title', 'invoice_amount','invoice_type','invoice_content', 'invoice_note')
+           'fields': ('invoice_title','invoice_title_tariffItem', 'invoice_amount','invoice_type','invoice_content', 'invoice_note')
         }),
         ('开票信息', {
             'fields': ('invoice_code','tax_amount','date','invoice_file')
@@ -148,7 +152,6 @@ class InvoiceAdmin(ExportActionModelAdmin):
             'fields': ('tracking_number','send_date')
         })
     )
-
     def invoice_contract_number(self, obj):
         return obj.invoice.contract.contract_number
     invoice_contract_number.short_description = '合同号'
@@ -178,8 +181,12 @@ class InvoiceAdmin(ExportActionModelAdmin):
     invoice_period.short_description = '款期'
 
     def invoice_title(self, obj):
-        return obj.invoice.title
+        return obj.invoice.title.title
     invoice_title.short_description = '发票抬头'
+
+    def invoice_title_tariffItem(self,obj):
+        return obj.invoice.title.tariffItem
+    invoice_title_tariffItem.short_description = '发票税号'
 
     def invoice_amount(self, obj):
         return obj.invoice.amount
@@ -276,8 +283,8 @@ class InvoiceAdmin(ExportActionModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         if not request.user.has_perm('fm.add_invoice'):
-            return ['invoice_title', 'invoice_amount','invoice_type','invoice_content', 'invoice_note', 'invoice_code', 'tracking_number','tax_amount','date','invoice_file']
-        return ['invoice_title', 'invoice_amount', 'invoice_type','invoice_content','invoice_note']
+            return ['invoice_title','invoice_title_tariffItem', 'invoice_amount','invoice_type','invoice_content', 'invoice_note', 'invoice_code', 'tracking_number','tax_amount','date','invoice_file']
+        return ['invoice_title','invoice_title_tariffItem', 'invoice_amount', 'invoice_type','invoice_content','invoice_note']
 
     def get_inline_instances(self, request, obj=None):
         #超级用户修改发票管理的时候,存在bill的内联table所有不添加了，

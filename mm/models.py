@@ -1,6 +1,14 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+class InvoiceTitle(models.Model):
+    title = models.CharField("发票抬头",max_length=100)
+    tariffItem = models.CharField("税号",max_length=50,unique=True)
+    class Meta:
+        verbose_name = '发票抬头'
+        verbose_name_plural = '发票抬头'
+    def __str__(self):
+        return '%s' % self.title
 
 class Contract(models.Model):
     RANGE_CHOICES = (
@@ -71,7 +79,7 @@ class Invoice(models.Model):
         verbose_name='合同',
         on_delete=models.CASCADE,
     )
-    title = models.CharField('发票抬头', max_length=25,null=True)
+    title = models.ForeignKey(InvoiceTitle,verbose_name='发票抬头')
     issuingUnit = models.CharField('开票单位',choices=ISSUING_UNIT_CHOICES, max_length=25,default='sh')
     period = models.CharField('款期', max_length=3, choices=PERIOD_CHOICES, default='FIS')
     amount = models.DecimalField('发票金额', max_digits=9, decimal_places=2)
