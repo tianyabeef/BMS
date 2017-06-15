@@ -19,7 +19,7 @@ from notification.signals import notify
 from operator import is_not
 from functools import partial
 from django.utils import formats
-class InvoiceTitleAdmin(ExportActionModelAdmin):
+class InvoiceTitleAdmin(ImportExportActionModelAdmin):
     """
     Admin class for InvoiceTitle
     """
@@ -203,7 +203,7 @@ class ContractAdmin(ExportActionModelAdmin):
     """
     Admin class for Contract
     """
-    list_display = ('contract_number', 'name', 'type', 'salesman_name', 'price', 'range', 'all_amount', 'fis_income',
+    list_display = ('contract_number', 'name','title_tariffItem', 'type', 'salesman_name', 'price', 'range', 'all_amount', 'fis_income',
                     'fin_income', 'send_date', 'tracking_number', 'receive_date', 'file_link')
     inlines = [
         InvoiceInline,
@@ -223,7 +223,13 @@ class ContractAdmin(ExportActionModelAdmin):
     raw_id_fields = ['salesman']
     search_fields = ['contract_number', 'name', 'tracking_number']
     actions = ['make_receive']
-
+    def title_tariffItem(self,obj):
+        #抬头的单位名称
+        invoices = Invoice.objects.filter(contract=obj)
+        if invoices:
+            return invoices[0].title.title
+        return ""
+    title_tariffItem.short_description = "单位"
     def salesman_name(self, obj):
         # 销售用户名或姓名显示
         name = obj.salesman.last_name + obj.salesman.first_name
