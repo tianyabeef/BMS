@@ -24,25 +24,36 @@ def add_business_days(from_date, number_of_days):
     return to_date
 
 
-class SampleResource(resources.ModelResource):
-    project_name = fields.Field(column_name="项目")
-    type = fields.Field(column_name="样品类型",attribute="type")
-    species = fields.Field(column_name="物种",attribute="species")
-    name = fields.Field(column_name="样品名称",attribute="name")
-    volume = fields.Field(column_name="体积uL",attribute="volume")
-    concentration = fields.Field(column_name="浓度ng/uL",attribute="concentration")
-    receive_date = fields.Field(column_name="收样日期",attribute="receive_date")
-    check = fields.Field(column_name="样品核对",attribute="check")
-    note = fields.Field(column_name="备注",attribute="note")
+class SampleInfoResource(resources.ModelResource):
+    # project_name = fields.Field(column_name="项目")
+    # type = fields.Field(column_name="样品类型",attribute="type")
+    # species = fields.Field(column_name="物种",attribute="species")
+    # name = fields.Field(column_name="样品名称",attribute="name")
+    # volume = fields.Field(column_name="体积uL",attribute="volume")
+    # concentration = fields.Field(column_name="浓度ng/uL",attribute="concentration")
+    # receive_date = fields.Field(column_name="收样日期",attribute="receive_date")
+    # check = fields.Field(column_name="样品核对",attribute="check")
+    # note = fields.Field(column_name="备注",attribute="note")
     class Meta:
         model = SampleInfo
-        skip_unchanged = True
-        fields = ('project_name','type','species','name','volume','concentration',
-                  'receive_date','check','note')
-        export_order = ('project_name','type','species','name','volume','concentration',
-                  'receive_date','check','note')
-    def dehydrate_project_name(self, sampleinfo):
-        return sampleinfo.project.contract.name
+    #     skip_unchanged = True
+    #     fields = ('id','project_name','type','species','name','volume','concentration',
+    #               'receive_date','check','note')
+    #     export_order = ('id','project_name','type','species','name','volume','concentration',
+    #               'receive_date','check','note')
+    # def dehydrate_project_name(self, sampleinfo):
+    #     return sampleinfo.project.contract.name
+    #导入时，对数据做清理，挑选出需要导入的
+    # def clean_dataset_data(self, data):
+    #         # data = super(SampleInfoResource, self).clean_dataset_data(data)
+    #         clean_data = []
+    #         for index, row in enumerate(data):
+    #             _index = index + 2
+    #             # _row = self.get_clean_row(row)
+    #             # category = self.clean_dataset_category(_row[0], _index, row)
+    #             # city = self.clean_dataset_city((_row[1], _row[2]), _index, row)
+    #             clean_data.append(row.append(_index))
+    #         return clean_data
 
 
 class SampleInfoForm(forms.ModelForm):
@@ -53,7 +64,7 @@ class SampleInfoForm(forms.ModelForm):
 
 
 class SampleInfoAdmin(ImportExportActionModelAdmin):
-    resource_class = SampleResource
+    # resource_class = SampleInfoResource
     form = SampleInfoForm
     list_display = ['contract', 'project', 'type', 'species', 'name', 'volume', 'concentration', 'receive_date',
                     'check', 'note']
