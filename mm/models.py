@@ -44,6 +44,9 @@ class Contract(models.Model):
     tracking_number = models.CharField('快递单号', max_length=15, blank=True)
     receive_date = models.DateField('合同寄到日', null=True,blank=True)
     contract_file = models.FileField('附件', upload_to='uploads/%Y/%m',blank=True)
+    contacts = models.CharField('合同联系人',max_length=15, blank=True)
+    contact_phone = models.CharField('电话',max_length=30, blank=True)
+
 
     class Meta:
         verbose_name = '合同管理'

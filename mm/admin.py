@@ -25,6 +25,7 @@ class InvoiceTitleAdmin(ImportExportActionModelAdmin):
     """
     list_display = ('title', 'tariffItem')
     fields = ('title', 'tariffItem')
+    search_fields = ['title','tariffItem']
 
 class InvoiceForm(forms.ModelForm):
     # 开票金额与合同对应款期额校验 #22
@@ -211,7 +212,7 @@ class ContractAdmin(ExportActionModelAdmin):
     ordering = ['-id']
     fieldsets = (
         ('基本信息', {
-            'fields': ('contract_number', 'name', 'type', 'salesman', ('price', 'range'), ('fis_amount', 'fin_amount','all_amount'))
+            'fields': ('contract_number', 'name', 'type', 'salesman',('contacts','contact_phone'), ('price', 'range'), ('fis_amount', 'fin_amount','all_amount'))
         }),
         ('邮寄信息', {
             'fields': ('tracking_number','send_date','receive_date')
@@ -281,10 +282,16 @@ class ContractAdmin(ExportActionModelAdmin):
     def make_receive(self, request, queryset):
         # 批量记录合同回寄时间戳
         rows_updated = queryset.update(receive_date=datetime.now())
-        if rows_updated:
-            self.message_user(request, '%s 个合同寄到登记已完成' % rows_updated)
-        else:
-            self.message_user(request, '%s 未能成功登记' % rows_updated, level=messages.ERROR)
+        for obj in queryset:
+            if rows_updated:
+                #合同寄到日 通知项目管理2
+                for j in User.objects.filter(groups__id=2):
+                    notify.send(request.user, recipient=j, verb='客户收到新合同',\
+                                description="合同号：%s\t合同名称：%s\t合同联系人：%s\t电话：%s"%\
+                                            (obj.contract_number,obj.name,obj.contacts,obj.contact_phone))
+                self.message_user(request, '%s 个合同寄到登记已完成' % rows_updated)
+            else:
+                self.message_user(request, '%s 未能成功登记' % rows_updated, level=messages.ERROR)
     make_receive.short_description = '登记所选合同已收到'
 
     def get_changelist(self, request):
@@ -298,8 +305,10 @@ class ContractAdmin(ExportActionModelAdmin):
     def get_actions(self, request):
         actions = super(ContractAdmin, self).get_actions(request)
         if not request.user.has_perm('mm.delete_contract'):
-            del actions['delete_selected']
-            del actions['make_receive']
+            if "delete_selected" in actions:
+                del actions['delete_selected']
+            if "make_receive" in actions:
+                del actions['make_receive']
         return actions
 
     # def get_readonly_fields(self, request, obj=None):
@@ -314,7 +323,7 @@ class ContractAdmin(ExportActionModelAdmin):
             yield inline.get_formset(request, obj), inline
 
     def get_queryset(self, request):
-        # 只允许管理员和拥有该模型新增权限的人员，销售总监才能查看所有
+        # 只允许管理员,拥有该模型新增权限的人员，销售总监才能查看所有
         haved_perm = False
         for group in request.user.groups.all():
             if group.id == 7:
@@ -350,8 +359,8 @@ class ContractAdmin(ExportActionModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         if not request.user.has_perm('mm.delete_contract'):
-            return ['contract_number', 'name', 'type', 'salesman', 'price', 'range', 'fis_amount', 'fin_amount',
-                    'tracking_number', 'send_date', 'receive_date', 'contract_file']
+            return ['contract_number', 'name', 'type', 'salesman','contacts','contact_phone', 'price', 'range', 'fis_amount', 'fin_amount',
+                    'all_amount','tracking_number', 'send_date', 'receive_date', 'contract_file']
         return []
 
     def save_formset(self, request, form, formset, change):
@@ -377,6 +386,12 @@ class ContractAdmin(ExportActionModelAdmin):
             obj.send_date = datetime.now()
         elif not obj.tracking_number:
             obj.send_date = None
+        if obj.receive_date and Contract.objects.filter(id=obj.id)[0].receive_date != obj.receive_date:
+            #合同寄到日有变动就 通知项目管理2
+            for j in User.objects.filter(groups__id=2):
+                notify.send(request.user, recipient=j, verb='客户收到新合同',\
+                            description="合同号：%s\t合同名称：%s\t合同联系人：%s\t电话：%s"%\
+                                        (obj.contract_number,obj.name,obj.contacts,obj.contact_phone))
         obj.save()
 
 admin.site.register(Contract, ContractAdmin)

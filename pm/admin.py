@@ -8,7 +8,8 @@ from mm.models import Contract
 from django.db.models import Sum
 from django.utils.html import format_html
 from django.contrib import messages
-
+from django.contrib.auth.models import User
+from notification.signals import notify
 
 def add_business_days(from_date, number_of_days):
     to_date = from_date
@@ -183,7 +184,7 @@ class ProjectAdmin(admin.ModelAdmin):
            'fields': (('contract', 'contract_name'),)
         }),
         ('项目信息', {
-            'fields': ('customer', 'name', ('service_type', 'is_ext', 'is_qc', 'is_lib'), 'data_amount')
+            'fields': (('customer','project_phone'), 'name', ('service_type', 'is_ext', 'is_qc', 'is_lib'), 'data_amount')
         }),
         ('节点信息', {
             'fields': (('seq_start_date', 'seq_end_date'), ('ana_start_date', 'ana_end_date'),
@@ -398,6 +399,10 @@ class ProjectAdmin(admin.ModelAdmin):
             old_cycle = project.ext_cycle + project.qc_cycle + project.lib_cycle + project.seq_cycle + project.ana_cycle
             new_cycle = obj.ext_cycle + obj.qc_cycle + obj.lib_cycle + obj.seq_cycle + obj.ana_cycle
             obj.due_date = add_business_days(project.due_date, new_cycle - old_cycle)
+        if obj.contract and not obj.id:
+            #项目新建，通知实验管理1
+            for j in User.objects.filter(groups__id=1):
+                notify.send(request.user, recipient=j, verb='新增了项目',description="合同名称：%s"%(obj.contract.name))
         obj.save()
 
     # def get_changelist_formset(self, request, **kwargs):

@@ -1,8 +1,9 @@
 from django.contrib import admin
 from .models import SampleInfo, QcTask, ExtTask, LibTask
+from pm.models import Project
 from django import forms
 from django.contrib import messages
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from django.utils.html import format_html
 from notification.signals import notify
 from import_export import fields
@@ -25,36 +26,33 @@ def add_business_days(from_date, number_of_days):
 
 
 class SampleInfoResource(resources.ModelResource):
-    # project_name = fields.Field(column_name="项目")
-    # type = fields.Field(column_name="样品类型",attribute="type")
-    # species = fields.Field(column_name="物种",attribute="species")
-    # name = fields.Field(column_name="样品名称",attribute="name")
-    # volume = fields.Field(column_name="体积uL",attribute="volume")
-    # concentration = fields.Field(column_name="浓度ng/uL",attribute="concentration")
-    # receive_date = fields.Field(column_name="收样日期",attribute="receive_date")
-    # check = fields.Field(column_name="样品核对",attribute="check")
-    # note = fields.Field(column_name="备注",attribute="note")
+    def get_export_headers(self):
+        return ["id","项目","样品类型","物种","样品名称","体积uL","浓度ng/uL","收样日期","样品核对","备注"]
+    def get_diff_headers(self):
+        return ["id","项目","样品类型","物种","样品名称","体积uL","浓度ng/uL","收样日期","样品核对","备注"]
+    def init_instance(self, row=None):
+        if not row:
+            row = {}
+        instance = self._meta.model()
+        for attr, value in row.items():
+            setattr(instance, attr, value)
+        instance.project = Project.objects.get(id=row['项目'])
+        instance.type = row['样品类型']
+        instance.species = row['物种']
+        instance.name = row['样品名称']
+        instance.volume = row['体积uL']
+        instance.concentration = row['浓度ng/uL']
+        instance.receive_date = datetime.strptime(row['收样日期'],'%Y-%m-%d')
+        instance.check = row['样品核对']
+        instance.note = row['备注']
+        return instance
     class Meta:
         model = SampleInfo
-    #     skip_unchanged = True
-    #     fields = ('id','project_name','type','species','name','volume','concentration',
-    #               'receive_date','check','note')
-    #     export_order = ('id','project_name','type','species','name','volume','concentration',
-    #               'receive_date','check','note')
-    # def dehydrate_project_name(self, sampleinfo):
-    #     return sampleinfo.project.contract.name
-    #导入时，对数据做清理，挑选出需要导入的
-    # def clean_dataset_data(self, data):
-    #         # data = super(SampleInfoResource, self).clean_dataset_data(data)
-    #         clean_data = []
-    #         for index, row in enumerate(data):
-    #             _index = index + 2
-    #             # _row = self.get_clean_row(row)
-    #             # category = self.clean_dataset_category(_row[0], _index, row)
-    #             # city = self.clean_dataset_city((_row[1], _row[2]), _index, row)
-    #             clean_data.append(row.append(_index))
-    #         return clean_data
-
+        skip_unchanged = True
+        fields = ('id','project__contract__name','type','species','name','volume','concentration',
+                  'receive_date','check','note')
+        export_order = ('id','project__contract__name','type','species','name','volume','concentration',
+                  'receive_date','check','note')
 
 class SampleInfoForm(forms.ModelForm):
     def clean_note(self):
@@ -64,7 +62,7 @@ class SampleInfoForm(forms.ModelForm):
 
 
 class SampleInfoAdmin(ImportExportActionModelAdmin):
-    # resource_class = SampleInfoResource
+    resource_class = SampleInfoResource
     form = SampleInfoForm
     list_display = ['contract', 'project', 'type', 'species', 'name', 'volume', 'concentration', 'receive_date',
                     'check', 'note']

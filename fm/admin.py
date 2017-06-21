@@ -137,7 +137,7 @@ class InvoiceAdmin(ExportActionModelAdmin):
                     'contract_type', 'invoice_period', 'invoice_title', 'invoice_amount', 'income_date',
                     'bill_receivable', 'invoice_code', 'date', 'tracking_number', 'send_date','file_link')
     list_display_links = ['invoice_title', 'invoice_amount']
-    search_fields = ['invoice_title','invoice_code']
+    search_fields = ['invoice__title__title','invoice_code','^invoice__amount']
     inlines = [
         BillInline,
     ]

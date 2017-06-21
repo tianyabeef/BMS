@@ -8,7 +8,8 @@ class Project(models.Model):
         verbose_name='合同号',
         on_delete=models.CASCADE,
     )
-    customer = models.CharField('客户', max_length=20)
+    customer = models.CharField('客户', max_length=20, blank=True)
+    project_phone = models.CharField('电话',max_length=30, blank=True)
     name = models.CharField('项目注解', max_length=100, blank=True)
     service_type = models.CharField('服务类型', max_length=50)
     data_amount = models.CharField('数据要求', max_length=10)
