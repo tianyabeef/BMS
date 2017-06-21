@@ -1,5 +1,3 @@
-#!/usr/bin/env Python
-# coding=gbk
 from django.contrib import admin
 from .models import SampleInfo, QcTask, ExtTask, LibTask
 from pm.models import Project
