@@ -27,24 +27,24 @@ def add_business_days(from_date, number_of_days):
 
 class SampleInfoResource(resources.ModelResource):
     def get_export_headers(self):
-        return ["id","ÏîÄ¿","ÑùÆ·ÀàĞÍ","ÎïÖÖ","ÑùÆ·Ãû³Æ","Ìå»ıuL","Å¨¶Èng/uL","ÊÕÑùÈÕÆÚ","ÑùÆ·ºË¶Ô","±¸×¢"]
+        return ["id","é¡¹ç›®","æ ·å“ç±»å‹","ç‰©ç§","æ ·å“åç§°","ä½“ç§¯uL","æµ“åº¦ng/uL","æ”¶æ ·æ—¥æœŸ","æ ·å“æ ¸å¯¹","å¤‡æ³¨"]
     def get_diff_headers(self):
-        return ["id","ÏîÄ¿","ÑùÆ·ÀàĞÍ","ÎïÖÖ","ÑùÆ·Ãû³Æ","Ìå»ıuL","Å¨¶Èng/uL","ÊÕÑùÈÕÆÚ","ÑùÆ·ºË¶Ô","±¸×¢"]
+        return ["id","é¡¹ç›®","æ ·å“ç±»å‹","ç‰©ç§","æ ·å“åç§°","ä½“ç§¯uL","æµ“åº¦ng/uL","æ”¶æ ·æ—¥æœŸ","æ ·å“æ ¸å¯¹","å¤‡æ³¨"]
     def init_instance(self, row=None):
         if not row:
             row = {}
         instance = self._meta.model()
         for attr, value in row.items():
             setattr(instance, attr, value)
-        instance.project = Project.objects.get(id=row['ÏîÄ¿'])
-        instance.type = row['ÑùÆ·ÀàĞÍ']
-        instance.species = row['ÎïÖÖ']
-        instance.name = row['ÑùÆ·Ãû³Æ']
-        instance.volume = row['Ìå»ıuL']
-        instance.concentration = row['Å¨¶Èng/uL']
-        instance.receive_date = datetime.strptime(row['ÊÕÑùÈÕÆÚ'],'%Y-%m-%d')
-        instance.check = row['ÑùÆ·ºË¶Ô']
-        instance.note = row['±¸×¢']
+        instance.project = Project.objects.get(id=row['é¡¹ç›®'])
+        instance.type = row['æ ·å“ç±»å‹']
+        instance.species = row['ç‰©ç§']
+        instance.name = row['æ ·å“åç§°']
+        instance.volume = row['ä½“ç§¯uL']
+        instance.concentration = row['æµ“åº¦ng/uL']
+        instance.receive_date = datetime.strptime(row['æ”¶æ ·æ—¥æœŸ'],'%Y-%m-%d')
+        instance.check = row['æ ·å“æ ¸å¯¹']
+        instance.note = row['å¤‡æ³¨']
         return instance
     class Meta:
         model = SampleInfo
@@ -57,7 +57,7 @@ class SampleInfoResource(resources.ModelResource):
 class SampleInfoForm(forms.ModelForm):
     def clean_note(self):
         if self.cleaned_data['check'] is False and not self.cleaned_data['note']:
-            raise forms.ValidationError('Î´Í¨¹ıºËÑéµÄÑùÆ·Ğè±¸×¢')
+            raise forms.ValidationError('æœªé€šè¿‡æ ¸éªŒçš„æ ·å“éœ€å¤‡æ³¨')
         return self.cleaned_data['note']
 
 
@@ -75,34 +75,34 @@ class SampleInfoAdmin(ImportExportActionModelAdmin):
 
     def contract(self, obj):
         return obj.project.contract
-    contract.short_description = 'ºÏÍ¬'
+    contract.short_description = 'åˆåŒ'
 
     def contract_name(self, obj):
         return obj.project.contract.name
-    contract_name.short_description = 'ºÏÍ¬Ãû'
+    contract_name.short_description = 'åˆåŒå'
 
     def customer(self, obj):
         return obj.project.customer
-    customer.short_description = '¿Í»§'
+    customer.short_description = 'å®¢æˆ·'
 
     def make_pass(self, request, queryset):
         rows_updated = queryset.update(check=True)
         if rows_updated:
-            self.message_user(request, '%s ¸öÑùÆ·ºËÑéÍ¨¹ı' % rows_updated)
-            #ÑùÆ·ĞÅÏ¢ºË¶Ô£¬ÌáĞÑÏàÓ¦ÏúÊÛÈËÔ±
-            notify.send(request.user, recipient=queryset[0].project.contract.salesman, verb='ºË¶ÔÁËÑùÆ·ĞÅÏ¢',description="ÏîÄ¿Ãû³Æ£º%s ´Ë´ÎºË¶ÔµÄÑùÆ·ÊıÁ¿£º%s"%(queryset[0].project.name,rows_updated))
+            self.message_user(request, '%s ä¸ªæ ·å“æ ¸éªŒé€šè¿‡' % rows_updated)
+            #æ ·å“ä¿¡æ¯æ ¸å¯¹ï¼Œæé†’ç›¸åº”é”€å”®äººå‘˜
+            notify.send(request.user, recipient=queryset[0].project.contract.salesman, verb='æ ¸å¯¹äº†æ ·å“ä¿¡æ¯',description="é¡¹ç›®åç§°ï¼š%s æ­¤æ¬¡æ ¸å¯¹çš„æ ·å“æ•°é‡ï¼š%s"%(queryset[0].project.name,rows_updated))
         else:
-            self.message_user(request, '%s Î´³É¹¦²Ù×÷±ê¼ÇºËÑéÍ¨¹ı' % rows_updated, level=messages.ERROR)
-    make_pass.short_description = '±ê¼ÇËùÑ¡ÑùÆ·ºËÑéÍ¨¹ı'
+            self.message_user(request, '%s æœªæˆåŠŸæ“ä½œæ ‡è®°æ ¸éªŒé€šè¿‡' % rows_updated, level=messages.ERROR)
+    make_pass.short_description = 'æ ‡è®°æ‰€é€‰æ ·å“æ ¸éªŒé€šè¿‡'
 
     def save_model(self, request, obj, form, change):
         if obj.check is False and not obj.note:
             messages.set_level(request, messages.ERROR)
-            self.message_user(request, '²»Í¨¹ıºËÑéÊ±ĞèÒª½øĞĞ±¸×¢', level=messages.ERROR)
+            self.message_user(request, 'ä¸é€šè¿‡æ ¸éªŒæ—¶éœ€è¦è¿›è¡Œå¤‡æ³¨', level=messages.ERROR)
         else:
             obj.save()
-            #ÑùÆ·ĞÅÏ¢ºË¶Ô£¬ÌáĞÑÏàÓ¦ÏúÊÛÈËÔ±
-            notify.send(request.user, recipient=obj.project.contract.salesman, verb='ºË¶ÔÁËÑùÆ·ĞÅÏ¢',description="ÏîÄ¿Ãû³Æ£º%s ÑùÆ·Ãû³Æ£º%s"%(obj.project.name,obj.project.contract.name))
+            #æ ·å“ä¿¡æ¯æ ¸å¯¹ï¼Œæé†’ç›¸åº”é”€å”®äººå‘˜
+            notify.send(request.user, recipient=obj.project.contract.salesman, verb='æ ¸å¯¹äº†æ ·å“ä¿¡æ¯',description="é¡¹ç›®åç§°ï¼š%s æ ·å“åç§°ï¼š%s"%(obj.project.name,obj.project.contract.name))
 
     def get_queryset(self, request):
         qs = super(SampleInfoAdmin, self).get_queryset(request)
@@ -126,7 +126,7 @@ class SampleInfoAdmin(ImportExportActionModelAdmin):
 class ExtTaskForm(forms.ModelForm):
     def clean_note(self):
         if self.cleaned_data['result'] is False and not self.cleaned_data['note']:
-            raise forms.ValidationError('ÌáÈ¡Ê§°ÜµÄÑùÆ·Ğè±¸×¢')
+            raise forms.ValidationError('æå–å¤±è´¥çš„æ ·å“éœ€å¤‡æ³¨')
         return self.cleaned_data['note']
 
 
@@ -141,38 +141,38 @@ class ExtTaskAdmin(admin.ModelAdmin):
 
     def contract(self, obj):
         return obj.sample.project.contract
-    contract.short_description = 'ºÏÍ¬'
+    contract.short_description = 'åˆåŒ'
 
     def contract_name(self, obj):
         return obj.sample.project.contract.name
-    contract_name.short_description = 'ºÏÍ¬Ãû'
+    contract_name.short_description = 'åˆåŒå'
 
     def customer(self, obj):
         return obj.sample.project.customer
-    customer.short_description = '¿Í»§'
+    customer.short_description = 'å®¢æˆ·'
 
     def project(self, obj):
         return obj.sample.project
-    project.short_description = 'ÏîÄ¿'
+    project.short_description = 'é¡¹ç›®'
 
     def sample_name(self, obj):
         return obj.sample.name
-    sample_name.short_description = 'ÑùÆ·'
+    sample_name.short_description = 'æ ·å“'
 
     def receive_date(self, obj):
         return obj.sample.receive_date
-    receive_date.short_description = 'ÊÕÑùÈÕÆÚ'
+    receive_date.short_description = 'æ”¶æ ·æ—¥æœŸ'
 
     def left_days(self, obj):
         if obj.date:
-            return 'Íê³É'
+            return 'å®Œæˆ'
         due_date = add_business_days(obj.sub_date, obj.sample.project.ext_cycle)
         left = (due_date - date.today()).days
         if left >= 0:
-            return 'Óà%sÌì' % left
+            return 'ä½™%så¤©' % left
         else:
-            return format_html('<span style="color:{};">{}</span>', 'red', 'ÑÓ%sÌì' % -left)
-    left_days.short_description = 'Ê£ÓàÖÜÆÚ'
+            return format_html('<span style="color:{};">{}</span>', 'red', 'å»¶%så¤©' % -left)
+    left_days.short_description = 'å‰©ä½™å‘¨æœŸ'
 
     def operator(self, obj):
         if obj.staff:
@@ -181,17 +181,17 @@ class ExtTaskAdmin(admin.ModelAdmin):
                 return name
             return obj.staff
         return ''
-    operator.short_description = 'ÊµÑéÔ±'
+    operator.short_description = 'å®éªŒå‘˜'
 
     def make_pass(self, request, queryset):
         rows_updated = queryset.update(result=True, date=date.today(), staff=request.user)
         if rows_updated:
-            self.message_user(request, '%s ¸öÑùÆ·ÌáÈ¡³É¹¦' % rows_updated)
-            #ÑùÆ·ÌáÈ¡³É£¬ÌáĞÑÏàÓ¦ÏúÊÛÈËÔ±
-            notify.send(request.user, recipient=queryset[0].project.contract.salesman, verb='ÌáÈ¡ÑùÆ·³É¹¦',description="ÏîÄ¿Ãû³Æ£º%s ´Ë´ÎºË¶ÔµÄÑùÆ·ÊıÁ¿£º%s"%(queryset[0].project.name,rows_updated))
+            self.message_user(request, '%s ä¸ªæ ·å“æå–æˆåŠŸ' % rows_updated)
+            #æ ·å“æå–æˆï¼Œæé†’ç›¸åº”é”€å”®äººå‘˜
+            notify.send(request.user, recipient=queryset[0].project.contract.salesman, verb='æå–æ ·å“æˆåŠŸ',description="é¡¹ç›®åç§°ï¼š%s æ­¤æ¬¡æ ¸å¯¹çš„æ ·å“æ•°é‡ï¼š%s"%(queryset[0].project.name,rows_updated))
         else:
-            self.message_user(request, '%s Î´ÄÜ²Ù×÷±ê¼ÇÎªÌáÈ¡³É¹¦' % rows_updated, level=messages.ERROR)
-    make_pass.short_description = '±ê¼ÇËùÑ¡ÑùÆ·ÌáÈ¡³É¹¦'
+            self.message_user(request, '%s æœªèƒ½æ“ä½œæ ‡è®°ä¸ºæå–æˆåŠŸ' % rows_updated, level=messages.ERROR)
+    make_pass.short_description = 'æ ‡è®°æ‰€é€‰æ ·å“æå–æˆåŠŸ'
 
     def save_model(self, request, obj, form, change):
         if obj.result is None:
@@ -201,8 +201,8 @@ class ExtTaskAdmin(admin.ModelAdmin):
             obj.date = date.today()
             obj.staff = request.user
         obj.save()
-        #ÑùÆ·ÌáÈ¡³É¹¦£¬ÌáĞÑÏàÓ¦ÏúÊÛÈËÔ±
-        notify.send(request.user, recipient=obj.project.contract.salesman, verb='ºË¶ÔÁËÑùÆ·ĞÅÏ¢',description="ÏîÄ¿Ãû³Æ£º%s ÑùÆ·Ãû³Æ£º%s"%(obj.project.name,obj.project.contract.name))
+        #æ ·å“æå–æˆåŠŸï¼Œæé†’ç›¸åº”é”€å”®äººå‘˜
+        notify.send(request.user, recipient=obj.project.contract.salesman, verb='æ ¸å¯¹äº†æ ·å“ä¿¡æ¯',description="é¡¹ç›®åç§°ï¼š%s æ ·å“åç§°ï¼š%s"%(obj.project.name,obj.project.contract.name))
 
     def get_queryset(self, request):
         qs = super(ExtTaskAdmin, self).get_queryset(request)
@@ -225,7 +225,7 @@ class ExtTaskAdmin(admin.ModelAdmin):
 class QcTaskForm(forms.ModelForm):
     def clean_note(self):
         if self.cleaned_data['result'] in [2, 3] and not self.cleaned_data['note']:
-            raise forms.ValidationError('ÖÊ¼ì²»ºÏ¸ñµÄÑùÆ·Ğè±¸×¢')
+            raise forms.ValidationError('è´¨æ£€ä¸åˆæ ¼çš„æ ·å“éœ€å¤‡æ³¨')
         return self.cleaned_data['note']
 
 
@@ -241,38 +241,38 @@ class QcTaskAdmin(admin.ModelAdmin):
 
     def contract(self, obj):
         return obj.sample.project.contract
-    contract.short_description = 'ºÏÍ¬'
+    contract.short_description = 'åˆåŒ'
 
     def contract_name(self, obj):
         return obj.sample.project.contract.name
-    contract_name.short_description = 'ºÏÍ¬Ãû'
+    contract_name.short_description = 'åˆåŒå'
 
     def customer(self, obj):
         return obj.sample.project.customer
-    customer.short_description = '¿Í»§'
+    customer.short_description = 'å®¢æˆ·'
 
     def project(self, obj):
         return obj.sample.project
-    project.short_description = 'ÏîÄ¿'
+    project.short_description = 'é¡¹ç›®'
 
     def sample_name(self, obj):
         return obj.sample.name
-    sample_name.short_description = 'ÑùÆ·'
+    sample_name.short_description = 'æ ·å“'
 
     def receive_date(self, obj):
         return obj.sample.receive_date
-    receive_date.short_description = 'ÊÕÑùÈÕÆÚ'
+    receive_date.short_description = 'æ”¶æ ·æ—¥æœŸ'
 
     def left_days(self, obj):
         if obj.date:
-            return 'Íê³É'
+            return 'å®Œæˆ'
         due_date = add_business_days(obj.sub_date, obj.sample.project.qc_cycle)
         left = (due_date - date.today()).days
         if left >= 0:
-            return 'Óà%sÌì' % left
+            return 'ä½™%så¤©' % left
         else:
-            return format_html('<span style="color:{};">{}</span>', 'red', 'ÑÓ%sÌì' % -left)
-    left_days.short_description = 'Ê£ÓàÖÜÆÚ'
+            return format_html('<span style="color:{};">{}</span>', 'red', 'å»¶%så¤©' % -left)
+    left_days.short_description = 'å‰©ä½™å‘¨æœŸ'
 
     def operator(self, obj):
         if obj.staff:
@@ -281,17 +281,17 @@ class QcTaskAdmin(admin.ModelAdmin):
                 return name
             return obj.staff
         return ''
-    operator.short_description = 'ÊµÑéÔ±'
+    operator.short_description = 'å®éªŒå‘˜'
 
     def make_pass(self, request, queryset):
         rows_updated = queryset.update(result=1, date=date.today(), staff=request.user)
         if rows_updated:
-            self.message_user(request, '%s ¸öÑùÆ·ÖÊ¼ìºÏ¸ñ' % rows_updated)
-            #ÑùÆ·ÖÊ¼ìºÏ¸ñ£¬ÌáĞÑÏàÓ¦ÏúÊÛÈËÔ±
-            notify.send(request.user, recipient=queryset[0].project.contract.salesman, verb='ÑùÆ·ÖÊ¼ìºÏ¸ñ',description="ÏîÄ¿Ãû³Æ£º%s ´Ë´ÎºË¶ÔµÄÑùÆ·ÊıÁ¿£º%s"%(queryset[0].project.name,rows_updated))
+            self.message_user(request, '%s ä¸ªæ ·å“è´¨æ£€åˆæ ¼' % rows_updated)
+            #æ ·å“è´¨æ£€åˆæ ¼ï¼Œæé†’ç›¸åº”é”€å”®äººå‘˜
+            notify.send(request.user, recipient=queryset[0].project.contract.salesman, verb='æ ·å“è´¨æ£€åˆæ ¼',description="é¡¹ç›®åç§°ï¼š%s æ­¤æ¬¡æ ¸å¯¹çš„æ ·å“æ•°é‡ï¼š%s"%(queryset[0].project.name,rows_updated))
         else:
-            self.message_user(request, '%s Î´ÄÜ²Ù×÷±ê¼ÇÎªÖÊ¼ìºÏ¸ñ' % rows_updated, level=messages.ERROR)
-    make_pass.short_description = '±ê¼ÇËùÑ¡ÑùÆ·ÖÊ¼ìºÏ¸ñ'
+            self.message_user(request, '%s æœªèƒ½æ“ä½œæ ‡è®°ä¸ºè´¨æ£€åˆæ ¼' % rows_updated, level=messages.ERROR)
+    make_pass.short_description = 'æ ‡è®°æ‰€é€‰æ ·å“è´¨æ£€åˆæ ¼'
 
     def save_model(self, request, obj, form, change):
         if obj.result == 0:
@@ -305,8 +305,8 @@ class QcTaskAdmin(admin.ModelAdmin):
             obj.date = date.today()
             obj.staff = request.user
         obj.save()
-        #ÑùÆ·ÖÊ¼ìºÏ¸ñ£¬ÌáĞÑÏàÓ¦ÏúÊÛÈËÔ±
-        notify.send(request.user, recipient=obj.project.contract.salesman, verb='ÑùÆ·ÖÊ¼ìºÏ¸ñ',description="ÏîÄ¿Ãû³Æ£º%s ÑùÆ·Ãû³Æ£º%s"%(obj.project.name,obj.project.contract.name))
+        #æ ·å“è´¨æ£€åˆæ ¼ï¼Œæé†’ç›¸åº”é”€å”®äººå‘˜
+        notify.send(request.user, recipient=obj.project.contract.salesman, verb='æ ·å“è´¨æ£€åˆæ ¼',description="é¡¹ç›®åç§°ï¼š%s æ ·å“åç§°ï¼š%s"%(obj.project.name,obj.project.contract.name))
 
     def get_queryset(self, request):
         qs = super(QcTaskAdmin, self).get_queryset(request)
@@ -330,7 +330,7 @@ class QcTaskAdmin(admin.ModelAdmin):
 class LibTaskForm(forms.ModelForm):
     def clean_note(self):
         if self.cleaned_data['result'] is False and not self.cleaned_data['note']:
-            raise forms.ValidationError('½¨¿â²»ºÏ¸ñµÄÑùÆ·Ğè±¸×¢')
+            raise forms.ValidationError('å»ºåº“ä¸åˆæ ¼çš„æ ·å“éœ€å¤‡æ³¨')
         return self.cleaned_data['note']
 
 
@@ -346,38 +346,38 @@ class LibTaskAdmin(admin.ModelAdmin):
 
     def contract(self, obj):
         return obj.sample.project.contract
-    contract.short_description = 'ºÏÍ¬'
+    contract.short_description = 'åˆåŒ'
 
     def contract_name(self, obj):
         return obj.sample.project.contract.name
-    contract_name.short_description = 'ºÏÍ¬Ãû'
+    contract_name.short_description = 'åˆåŒå'
 
     def customer(self, obj):
         return obj.sample.project.customer
-    customer.short_description = '¿Í»§'
+    customer.short_description = 'å®¢æˆ·'
 
     def project(self, obj):
         return obj.sample.project
-    project.short_description = 'ÏîÄ¿'
+    project.short_description = 'é¡¹ç›®'
 
     def sample_name(self, obj):
         return obj.sample.name
-    sample_name.short_description = 'ÑùÆ·'
+    sample_name.short_description = 'æ ·å“'
 
     def receive_date(self, obj):
         return obj.sample.receive_date
-    receive_date.short_description = 'ÊÕÑùÈÕÆÚ'
+    receive_date.short_description = 'æ”¶æ ·æ—¥æœŸ'
 
     def left_days(self, obj):
         if obj.date:
-            return 'Íê³É'
+            return 'å®Œæˆ'
         due_date = add_business_days(obj.sub_date, obj.sample.project.lib_cycle)
         left = (due_date - date.today()).days
         if left >= 0:
-            return 'Óà%sÌì' % left
+            return 'ä½™%så¤©' % left
         else:
-            return format_html('<span style="color:{};">{}</span>', 'red', 'ÑÓ%sÌì' % -left)
-    left_days.short_description = 'Ê£ÓàÖÜÆÚ'
+            return format_html('<span style="color:{};">{}</span>', 'red', 'å»¶%så¤©' % -left)
+    left_days.short_description = 'å‰©ä½™å‘¨æœŸ'
 
     def operator(self, obj):
         if obj.staff:
@@ -386,17 +386,17 @@ class LibTaskAdmin(admin.ModelAdmin):
                 return name
             return obj.staff
         return ''
-    operator.short_description = 'ÊµÑéÔ±'
+    operator.short_description = 'å®éªŒå‘˜'
 
     def make_pass(self, request, queryset):
         rows_updated = queryset.update(result=True, date=date.today(), staff=request.user)
         if rows_updated:
-            self.message_user(request, '%s ¸öÑùÆ·½¨¿âºÏ¸ñ' % rows_updated)
-            #ÑùÆ·½¨¿âºÏ¸ñ£¬ÌáĞÑÏàÓ¦ÏúÊÛÈËÔ±
-            notify.send(request.user, recipient=queryset[0].project.contract.salesman, verb='ÑùÆ·½¨¿âºÏ¸ñ',description="ÏîÄ¿Ãû³Æ£º%s ´Ë´ÎºË¶ÔµÄÑùÆ·ÊıÁ¿£º%s"%(queryset[0].project.name,rows_updated))
+            self.message_user(request, '%s ä¸ªæ ·å“å»ºåº“åˆæ ¼' % rows_updated)
+            #æ ·å“å»ºåº“åˆæ ¼ï¼Œæé†’ç›¸åº”é”€å”®äººå‘˜
+            notify.send(request.user, recipient=queryset[0].project.contract.salesman, verb='æ ·å“å»ºåº“åˆæ ¼',description="é¡¹ç›®åç§°ï¼š%s æ­¤æ¬¡æ ¸å¯¹çš„æ ·å“æ•°é‡ï¼š%s"%(queryset[0].project.name,rows_updated))
         else:
-            self.message_user(request, '%s Î´ÄÜ²Ù×÷±ê¼ÇÎª½¨¿âºÏ¸ñ' % rows_updated, level=messages.ERROR)
-    make_pass.short_description = '±ê¼ÇËùÑ¡ÑùÆ·½¨¿âºÏ¸ñ'
+            self.message_user(request, '%s æœªèƒ½æ“ä½œæ ‡è®°ä¸ºå»ºåº“åˆæ ¼' % rows_updated, level=messages.ERROR)
+    make_pass.short_description = 'æ ‡è®°æ‰€é€‰æ ·å“å»ºåº“åˆæ ¼'
 
     def save_model(self, request, obj, form, change):
         if obj.result is None:
@@ -415,8 +415,8 @@ class LibTaskAdmin(admin.ModelAdmin):
             obj.date = date.today()
             obj.staff = request.user
         obj.save()
-        #ÑùÆ·½¨¿âºÏ¸ñ£¬ÌáĞÑÏàÓ¦ÏúÊÛÈËÔ±
-        notify.send(request.user, recipient=obj.project.contract.salesman, verb='ÑùÆ·½¨¿âºÏ¸ñ',description="ÏîÄ¿Ãû³Æ£º%s ÑùÆ·Ãû³Æ£º%s"%(obj.project.name,obj.project.contract.name))
+        #æ ·å“å»ºåº“åˆæ ¼ï¼Œæé†’ç›¸åº”é”€å”®äººå‘˜
+        notify.send(request.user, recipient=obj.project.contract.salesman, verb='æ ·å“å»ºåº“åˆæ ¼',description="é¡¹ç›®åç§°ï¼š%s æ ·å“åç§°ï¼š%s"%(obj.project.name,obj.project.contract.name))
     def get_queryset(self, request):
         qs = super(LibTaskAdmin, self).get_queryset(request)
         if request.user.is_superuser or request.user.has_perm('lims.add_libtask'):
