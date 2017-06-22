@@ -45,7 +45,6 @@ class InvoiceInfoResource(resources.ModelResource):
     invoice_content = fields.Field(column_name='开票内容',attribute='invoice__content')
     invoice_issuingUnit = fields.Field(column_name='开票单位')
 
-
     class Meta:
         model = Invoice
         skip_unchanged = True
@@ -55,7 +54,6 @@ class InvoiceInfoResource(resources.ModelResource):
         export_order = ('contract_salesman','invoice_contract_number','contract_name','invoice_title','contract_price','contract_range',
                         'contract_amount','invoice_amount','contract_income','contract_income_date','invoice_code',
                         'invoice_type','invoice_tax_amount','invoice_content','invoice_issuingUnit')
-
     def dehydrate_contract_amount(self, invoice):
         return '%.2f' % (invoice.invoice.contract.fis_amount+invoice.invoice.contract.fin_amount)
     def dehydrate_contract_salesman(self,invoice):
@@ -70,6 +68,7 @@ class InvoiceInfoResource(resources.ModelResource):
         return invoice.invoice.title.title
     def dehydrate_invoice_issuingUnit(self,invoice):
         return invoice.invoice.get_issuingUnit_display()
+
 class BillInlineFormSet(BaseInlineFormSet):
     def clean(self):
         super(BillInlineFormSet, self).clean()
@@ -110,26 +109,6 @@ class SaleListFilter(admin.SimpleListFilter):
         for i in qs:
             if self.value() == i.username:
                 return queryset.filter(invoice__contract__salesman=i)
-
-# class SaleListFilterSale(admin.SimpleListFilter):
-#     title = '业务员'
-#     parameter_name = 'Sale'
-#
-#     def lookups(self, request, model_admin):
-#         qs_sale = User.objects.filter(groups__id=3)
-#         value = ['sale'] + list(qs_sale.values_list('username', flat=True))
-#         label = ['销售'] + ['——' + i.last_name + i.first_name for i in qs_sale]
-#         return tuple(zip(value, label))
-#
-#     def queryset(self, request, queryset):
-#         if self.value() == 'sale':
-#             return queryset.filter(invoice__contract__salesman__in=list(User.objects.filter(groups__id=3)))
-#         if self.value() == 'company':
-#             return queryset.filter(invoice__contract__salesman__in=list(User.objects.filter(groups__id=6)))
-#         qs = User.objects.filter(groups__in=[3, 6])
-#         for i in qs:
-#             if self.value() == i.username:
-#                 return queryset.filter(invoice__contract__salesman=i)
 
 class InvoiceAdmin(ExportActionModelAdmin):
     resource_class = InvoiceInfoResource
@@ -240,15 +219,26 @@ class InvoiceAdmin(ExportActionModelAdmin):
         if instances:
             sum_income = formset.instance.__total__
             invoice_amount = instances[0].invoice.invoice.amount
-            obj_invoice = Invoice.objects.get(id=instances[-1].invoice_id)
-            obj_invoice.income_date = instances[-1].date
-            obj_invoice.save()
+            obj_invoice = Invoice.objects.get(id=instances[-1].invoice.id)
+            obj_contract = Contract.objects.get(id=instances[-1].invoice.invoice.contract.id)
+            # obj_invoice.save()
+            # obj_contract.save()
             if sum_income <= invoice_amount:
                 for instance in instances:
                     instance.save()
                 formset.save_m2m()
                 obj_invoice.income = sum_income
+                #更新财务发票的到款日期
+                obj_invoice.income_date = instances[-1].date
+                #更新合同的收尾款到款日期
+                if instances[-1].invoice.invoice.period == "FIS":
+                    obj_contract.fis_date = instances[-1].date
+                    obj_contract.fis_amount_in = sum_income
+                if instances[-1].invoice.invoice.period == "FIN":
+                    obj_contract.fin_date = instances[-1].date
+                    obj_contract.fin_amount_in = sum_income
                 obj_invoice.save()
+                obj_contract.save()
                 #新的到账 通知财务部5
                 for j in User.objects.filter(groups__id=5):
                     notify.send(request.user, recipient=j, verb='填写一笔新到账',description="发票号：%s 到账金额：%s"%(obj_invoice,sum_income))

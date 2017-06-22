@@ -111,7 +111,9 @@ class ContractChangeList(ChangeList):
         super(ContractChangeList, self).get_results(*args, **kwargs)
         fis_amount = self.result_list.aggregate(fis_sum=Sum('fis_amount'))
         fin_amount = self.result_list.aggregate(fin_sum=Sum('fin_amount'))
+        all_amount = self.result_list.aggregate(all_sum=Sum('all_amount'))
         self.amount = (fis_amount['fis_sum'] or 0) + (fin_amount['fin_sum'] or 0)
+        self.amount_input = (all_amount['all_sum'] or 0)
 
 
 class SaleListFilter(admin.SimpleListFilter):
@@ -136,27 +138,6 @@ class SaleListFilter(admin.SimpleListFilter):
         for i in qs:
             if self.value() == i.username:
                 return queryset.filter(salesman=i)
-
-#暂时留着只有销售的检索
-# class SaleListFilterSale(admin.SimpleListFilter):
-#     title = '业务员'
-#     parameter_name = 'Sale'
-#
-#     def lookups(self, request, model_admin):
-#         qs_sale = User.objects.filter(groups__id=3)
-#         value = ['sale'] + list(qs_sale.values_list('username', flat=True))
-#         label = ['销售'] + ['——' + i.last_name + i.first_name for i in qs_sale]
-#         return tuple(zip(value, label))
-#
-#     def queryset(self, request, queryset):
-#         if self.value() == 'sale':
-#             return queryset.filter(salesman__in=list(User.objects.filter(groups__id=3)))
-#         if self.value() == 'company':
-#             return queryset.filter(salesman__in=list(User.objects.filter(groups__id=6)))
-#         qs = User.objects.filter(groups__in=[3, 6])
-#         for i in qs:
-#             if self.value() == i.username:
-#                 return queryset.filter(salesman=i)
 
 class ContractResource(resources.ModelResource):
     #按照合同号导出
@@ -239,44 +220,39 @@ class ContractAdmin(ExportActionModelAdmin):
         return obj.salesman
     salesman_name.short_description = '业务员'
 
-    # def total(self, obj):#总款不再计算，直接输入
-    #     # 总款计算并显示
-    #     amount = obj.fis_amount + obj.fin_amount
-    #     return amount
-    # total.short_description = '总款'
-
     def fis_income(self, obj):
         # 首款到账信息显示
-        q_income = Bill.objects.filter(invoice__invoice__contract=obj).filter(invoice__invoice__period='FIS')
-        income = q_income.aggregate(total_income=Sum('income'))['total_income'] or 0
-        if income:
-            date = q_income.last().date
-            amount = obj.fis_amount
-            t = amount - income
-            if t > 0:
-                return format_html('<span style="color:{};">{}</span>', 'red', '%s / %s' % (income, amount))
-            else:
-                obj.fis_date = date
+        amount = obj.fis_amount
+        if amount==0:
+            if not obj.fis_date:
+                obj.fis_amount_in = 0
+                obj.fis_date = datetime.now().strftime("%Y-%m-%d")
                 obj.save()
-                return '%s/%s' % (income, date)
-        return '0/%s' % obj.fis_amount
+        income = obj.fis_amount_in or 0
+
+        if amount - income > 0:
+            return format_html('<span style="color:{};">{}</span>', 'red', '%s / %s' % (income, amount))
+        elif amount - income == 0:
+            return '%s/%s' % (income, obj.fis_date)
+        else:
+            return format_html('<span style="color:{};">{}</span>', 'blue','%s / %s' % (income,amount))
     fis_income.short_description = '首款'
 
     def fin_income(self, obj):
         # 尾款到账信息显示
-        q_income = Bill.objects.filter(invoice__invoice__contract=obj).filter(invoice__invoice__period='FIN')
-        income = q_income.aggregate(total_income=Sum('income'))['total_income'] or 0
-        if income:
-            date = q_income.last().date
-            amount = obj.fin_amount
-            t = amount - income
-            if t > 0:
-                return format_html('<span style="color:{};">{}</span>', 'red', '%s / %s' % (income, amount))
-            else:
-                obj.fin_date = date
+        amount = obj.fin_amount
+        if amount==0:
+            if not obj.fin_date:
+                obj.fin_amount_in = 0
+                obj.fin_date = datetime.now().strftime("%Y-%m-%d")
                 obj.save()
-                return '%s/%s' % (income, date)
-        return '0/%s' % obj.fin_amount
+        income = obj.fin_amount_in or 0
+        if amount - income > 0:
+            return format_html('<span style="color:{};">{}</span>', 'red', '%s / %s' % (income, amount))
+        elif amount - income == 0:
+            return '%s/%s' % (income, obj.fin_date)
+        else:
+            return format_html('<span style="color:{};">{}</span>', 'blue','%s / %s' % (income,amount))
     fin_income.short_description = '尾款'
 
     def make_receive(self, request, queryset):
