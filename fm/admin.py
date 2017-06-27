@@ -211,6 +211,12 @@ class InvoiceAdmin(ExportActionModelAdmin):
         obj.save()
         #开出发票 通知相应销售人员
         notify.send(request.user, recipient=obj.invoice.contract.salesman, verb='开出发票',description="发票号码：%s 开票金额：%s"%(obj.invoice_code,obj.invoice.amount))
+        #通知市场人员，内容抬头，金额，对应销售员
+        for j in User.objects.filter(groups__id=4):
+            notify.send(request.user, recipient=j, verb='开出发票',description="发票抬头：%s\t开票金额：%s\t销售人员：%s%s"
+                                                                           %(obj.invoice.title.title,obj.invoice.amount,
+                                                                             obj.invoice.contract.salesman.first_name,
+                                                                             obj.invoice.contract.salesman.last_name))
 
     def save_formset(self, request, form, formset, change):
         instances = formset.save(commit=False)
