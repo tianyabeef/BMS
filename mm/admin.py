@@ -143,6 +143,7 @@ class ContractResource(resources.ModelResource):
     #按照合同号导出
     contract_number = fields.Field(column_name="合同号",attribute="contract_number")
     contract_name = fields.Field(column_name="合同名称",attribute="name")
+    invoice_issuingUnit = fields.Field(column_name="开票单位")
     receive_date = fields.Field(column_name="合同寄到日",attribute="receive_date")
     invoice_times = fields.Field(column_name="开票次数")
     invoice_date = fields.Field(column_name="开票日期")
@@ -159,12 +160,17 @@ class ContractResource(resources.ModelResource):
     class Meta:
         model = Contract
         skip_unchanged = True
-        fields = ('contract_number','contract_name','receive_date','invoice_times','invoice_date','invoice_income',
+        fields = ('contract_number','contract_name','invoice_issuingUnit','receive_date','invoice_times','invoice_date','invoice_income',
                   'invoice_income_date','contract_type','contract_salesman','contract_price','contract_range',
                   'contract_all_amount','contract_fis_amount','contract_fin_amount','contract_send_date')
-        export_order = ('contract_number','contract_name','receive_date','invoice_times','invoice_date','invoice_income',
+        export_order = ('contract_number','contract_name','invoice_issuingUnit','receive_date','invoice_times','invoice_date','invoice_income',
                         'invoice_income_date','contract_type','contract_salesman','contract_price','contract_range',
                   'contract_all_amount','contract_fis_amount','contract_fin_amount','contract_send_date')
+    def dehydrate_invoice_issuingUnit(self,contract):
+        invoices = Invoice.objects.filter(contract = contract)
+        if invoices:
+            return invoices[0].title.title
+        return ""
     def dehydrate_invoice_times(self, contract):
         return len(fm_Invoice.objects.filter(invoice__contract=contract))
     def dehydrate_invoice_date(self,contract):
