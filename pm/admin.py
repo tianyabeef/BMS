@@ -400,10 +400,10 @@ class ProjectAdmin(admin.ModelAdmin):
             new_cycle = obj.ext_cycle + obj.qc_cycle + obj.lib_cycle + obj.seq_cycle + obj.ana_cycle
             obj.due_date = add_business_days(project.due_date, new_cycle - old_cycle)
         if obj.contract and not obj.id:
+            obj.save()
             #项目新建，通知实验管理1
             for j in User.objects.filter(groups__id=1):
-                notify.send(request.user, recipient=j, verb='新增了项目',description="合同名称：%s"%(obj.contract.name))
-        obj.save()
+                notify.send(request.user, recipient=j, verb='新增了项目',description="项目ID:%s\t合同名称：%s"%(obj.id,obj.contract.name))
 
     # def get_changelist_formset(self, request, **kwargs):
     #     kwargs['formset'] = ProjectAdminFormSet
