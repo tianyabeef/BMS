@@ -20,7 +20,8 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     url(r'^', admin.site.urls),
-    url('^notification/inbox/', include('notification.urls', namespace='notifications')),
+    url(r'^notification/inbox/', include('notification.urls', namespace='notifications')),
+    url(r'^lims/',include('lims.urls', namespace='lims'))
 ]
 
 if settings.DEBUG:

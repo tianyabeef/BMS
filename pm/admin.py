@@ -174,7 +174,7 @@ class ProjectForm(forms.ModelForm):
 
 class ProjectAdmin(admin.ModelAdmin):
     form = ProjectForm
-    list_display = ('id', 'contract_name', 'is_confirm', 'status', 'sample_num', 'receive_date',
+    list_display = ('id','contract_number', 'contract_name', 'is_confirm', 'status', 'sample_num', 'receive_date',
                     'contract_node', 'ext_status', 'qc_status', 'lib_status', 'seq_status', 'ana_status',
                     'report_sub', 'result_sub', 'data_sub')
     # list_editable = ['is_confirm']
@@ -200,7 +200,12 @@ class ProjectAdmin(admin.ModelAdmin):
     readonly_fields = ['contract_name']
     raw_id_fields = ['contract']
     actions = ['make_confirm']
+    search_fields = ['contract__contract_number','id']
+    # change_list_template = "pm/chang_list_custom.html"
 
+    def contract_number(self, obj):
+        return obj.contract.contract_number
+    contract_number.short_description = '合同号'
     def contract_name(self, obj):
         return obj.contract.name
     contract_name.short_description = '项目名称'

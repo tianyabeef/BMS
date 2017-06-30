@@ -3,6 +3,18 @@ from django.contrib.auth.models import User
 
 
 class Project(models.Model):
+    STATUS_CHOICES = (
+        ('FIS', '待首款'),
+        ('ENS', '待处理'),
+        ('EXT', '提取中'),
+        ('QC', '质检中'),
+        ('LIB', '建库中'),
+        ('SEQ', '测序中'),
+        ('ANA', '分析中'),
+        ('FIN', '待尾款'),
+        ('FINE','尾款已到'),
+        ('END','完成'),
+    )
     contract = models.ForeignKey(
         'mm.Contract',
         verbose_name='合同号',
@@ -36,6 +48,7 @@ class Project(models.Model):
     data_date = models.DateField('释放数据日', blank=True, null=True)
     due_date = models.DateField('合同节点', blank=True, null=True)
     is_confirm = models.BooleanField('确认', default=False)
+    status = models.CharField('状态',max_length=3,choices=STATUS_CHOICES,default='FIS')
 
     class Meta:
         unique_together = ('contract', 'name')
@@ -113,5 +126,3 @@ class LibSubmit(models.Model):
 
     def __str__(self):
         return '%s' % self.slug
-
-

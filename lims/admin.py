@@ -54,6 +54,7 @@ class SampleInfoResource(resources.ModelResource):
         export_order = ('id','project__contract__name','type','species','name','volume','concentration',
                   'receive_date','check','note')
 
+
 class SampleInfoForm(forms.ModelForm):
     def clean_note(self):
         if self.cleaned_data['check'] is False and not self.cleaned_data['note']:
@@ -72,6 +73,8 @@ class SampleInfoAdmin(ImportExportActionModelAdmin):
     fields = (('contract', 'contract_name', 'project', 'customer'), ('name', 'receive_date'), 'type', 'species',
               'volume', 'concentration', 'check', 'note')
     raw_id_fields = ['project']
+    # change_list_template = "pm/chang_list_custom.html"
+    search_fields = ['project__contract__contract_number']
 
     def contract(self, obj):
         return obj.project.contract
@@ -121,6 +124,29 @@ class SampleInfoAdmin(ImportExportActionModelAdmin):
             return ['contract', 'contract_name', 'project', 'customer', 'name', 'receive_date', 'type', 'species',
                     'volume', 'concentration', 'check', 'note']
         return ['contract', 'contract_name', 'customer']
+
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        # 没有删除意向权限人员查看页面时隐藏所有按钮
+        extra_context = extra_context or {}
+        if not request.user.has_perm('lims.delete_sampleinfo'):
+            extra_context['really_hide_save_and_add_another_damnit'] = True
+            extra_context['show_save'] = False
+            extra_context['show_delete_link'] = False
+            extra_context['show_save_as_new'] = False
+            extra_context['show_save_and_add_another'] = False
+            extra_context['show_save_and_continue'] = False
+        return super(SampleInfoAdmin, self).change_view(request, object_id, form_url, extra_context=extra_context)
+    def add_view(self, request, form_url='', extra_context=None):
+        # 没有删除意向权限人员查看页面时隐藏所有按钮
+        extra_context = extra_context or {}
+        if not request.user.has_perm('lims.delete_sampleinfo'):
+            extra_context['really_hide_save_and_add_another_damnit'] = True
+            extra_context['show_save'] = False
+            extra_context['show_delete_link'] = False
+            extra_context['show_save_as_new'] = False
+            extra_context['show_save_and_add_another'] = False
+            extra_context['show_save_and_continue'] = False
+        return super(SampleInfoAdmin, self).add_view(request, form_url, extra_context=extra_context)
 
 
 class ExtTaskForm(forms.ModelForm):
@@ -202,7 +228,7 @@ class ExtTaskAdmin(admin.ModelAdmin):
             obj.staff = request.user
         obj.save()
         #样品提取成功，提醒相应销售人员
-        notify.send(request.user, recipient=obj.project.contract.salesman, verb='核对了样品信息',description="项目名称：%s 样品名称：%s"%(obj.project.name,obj.project.contract.name))
+        notify.send(request.user, recipient=obj.sample.project.contract.salesman, verb='核对了样品信息',description="项目名称：%s 样品名称：%s"%(obj.sample.project.name,obj.sample.project.contract.name))
 
     def get_queryset(self, request):
         qs = super(ExtTaskAdmin, self).get_queryset(request)
@@ -417,6 +443,7 @@ class LibTaskAdmin(admin.ModelAdmin):
         obj.save()
         #样品建库合格，提醒相应销售人员
         notify.send(request.user, recipient=obj.project.contract.salesman, verb='样品建库合格',description="项目名称：%s 样品名称：%s"%(obj.project.name,obj.project.contract.name))
+
     def get_queryset(self, request):
         qs = super(LibTaskAdmin, self).get_queryset(request)
         if request.user.is_superuser or request.user.has_perm('lims.add_libtask'):
@@ -434,6 +461,7 @@ class LibTaskAdmin(admin.ModelAdmin):
             return ['contract', 'contract_name', 'project', 'customer', 'sample_name', 'receive_date', 'type',
                     'sample_code', 'lib_code', 'index', 'length', 'volume', 'concentration', 'total', 'result', 'note']
         return ['contract', 'contract_name', 'project', 'customer', 'sample_name', 'receive_date']
+
 
 admin.site.register(SampleInfo, SampleInfoAdmin)
 admin.site.register(ExtTask, ExtTaskAdmin)
