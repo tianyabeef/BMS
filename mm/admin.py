@@ -237,13 +237,13 @@ class ContractAdmin(ExportActionModelAdmin):
         income = obj.fis_amount_in or 0
 
         if amount - income > 0:
-            return format_html('<span style="color:{};">{}</span>', 'red', '%s / %s' % (income, amount))
+            return format_html('<span style="color:{};">{}</span>', 'red', '%s/%s' % (income, amount))
         elif amount - income == 0:
             if amount == 0 :
                 return '%s/0'%(income)
             return '%s/%s' % (income, obj.fis_date)
         else:
-            return format_html('<span style="color:{};">{}</span>', 'blue','%s / %s / %s' % (income,amount,obj.fis_date))
+            return format_html('<span style="color:{};">{}</span>', 'blue','%s/%s/%s' % (income,amount,obj.fis_date))
     fis_income.short_description = '首款'
 
     def fin_income(self, obj):
@@ -256,13 +256,13 @@ class ContractAdmin(ExportActionModelAdmin):
                 obj.save()
         income = obj.fin_amount_in or 0
         if amount - income > 0:
-            return format_html('<span style="color:{};">{}</span>', 'red', '%s / %s' % (income, amount))
+            return format_html('<span style="color:{};">{}</span>', 'red', '%s/%s' % (income, amount))
         elif amount - income == 0:
             if amount == 0 :
                 return '%s/0'%(income)
             return '%s/%s' % (income, obj.fin_date)
         else:
-            return format_html('<span style="color:{};">{}</span>', 'blue','%s / %s / %s' % (income,amount,obj.fin_date))
+            return format_html('<span style="color:{};">{}</span>', 'blue','%s/%s/%s' % (income,amount,obj.fin_date))
     fin_income.short_description = '尾款'
 
     def make_receive(self, request, queryset):
