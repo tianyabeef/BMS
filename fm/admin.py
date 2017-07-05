@@ -8,12 +8,12 @@ from django.forms.models import BaseInlineFormSet
 from daterange_filter.filter import DateRangeFilter
 from django.contrib.auth.models import User
 from import_export import resources
-from import_export.admin import ImportExportActionModelAdmin,ExportActionModelAdmin
+from import_export.admin import ExportActionModelAdmin
 from import_export import fields
 from import_export.widgets import ForeignKeyWidget
 from mm.models import Contract
 from notification.signals import notify
-
+from pm.models import Project
 
 
 class InvoiceChangeList(ChangeList):
@@ -183,11 +183,6 @@ class InvoiceAdmin(ExportActionModelAdmin):
         return obj.invoice.note
     invoice_note.short_description = '备注'
 
-    # def bill_income(self, obj):
-    #     current_income_amounts = Bill.objects.filter(invoice__id=obj.id).values_list('income', flat=True)
-    #     return sum(current_income_amounts)
-    # bill_income.short_description = '到账金额'
-
     def bill_receivable(self, obj):
         """
         改进：是否可以接收来自于bill_income的计算值，避免重读查询
@@ -209,9 +204,9 @@ class InvoiceAdmin(ExportActionModelAdmin):
         elif not obj.tracking_number:
             obj.send_date = None
         obj.save()
-        #开出发票 通知相应销售人员
+        #开出发票后，通知相应销售人员。
         notify.send(request.user, recipient=obj.invoice.contract.salesman, verb='开出发票',description="发票号码：%s 开票金额：%s"%(obj.invoice_code,obj.invoice.amount))
-        #通知市场人员，内容抬头，金额，对应销售员
+        #通知市场人员，内容：抬头，金额，对应销售员。
         for j in User.objects.filter(groups__id=4):
             notify.send(request.user, recipient=j, verb='开出发票',description="发票抬头：%s\t开票金额：%s\t销售人员：%s%s"
                                                                            %(obj.invoice.title.title,obj.invoice.amount,
@@ -226,25 +221,34 @@ class InvoiceAdmin(ExportActionModelAdmin):
             sum_income = formset.instance.__total__
             invoice_amount = instances[0].invoice.invoice.amount
             obj_invoice = Invoice.objects.get(id=instances[-1].invoice.id)
+            invoice_in_contract = Invoice.objects.filter(invoice__contract__id = instances[-1].invoice.invoice.contract.id)
             obj_contract = Contract.objects.get(id=instances[-1].invoice.invoice.contract.id)
-            # obj_invoice.save()
-            # obj_contract.save()
+            obj_project = Project.objects.get(contract__id=instances[-1].invoice.invoice.contract.id)
             if sum_income <= invoice_amount:
                 for instance in instances:
                     instance.save()
                 formset.save_m2m()
                 obj_invoice.income = sum_income
-                #更新财务发票的到款日期
+                #最后一次到账的日期，更新到财务发票的到款日期
                 obj_invoice.income_date = instances[-1].date
-                #更新合同的收尾款到款日期
+                obj_invoice.save()
+                #更新合同的首尾款到款日期、到款总额、
                 if instances[-1].invoice.invoice.period == "FIS":
                     obj_contract.fis_date = instances[-1].date
+                    #如果首款有多张发票
+                    if invoice_in_contract:
+                        sum_income = sum([invoice_temp.income for invoice_temp in invoice_in_contract])
                     obj_contract.fis_amount_in = sum_income
+                    #合同的首款<bill金额的总和,在项目管理中的状态为待处理，尾款已到。
+                    if (sum_income >= obj_contract.fis_amount) and (obj_project.status < 2):
+                        obj_project.status = 2
                 if instances[-1].invoice.invoice.period == "FIN":
                     obj_contract.fin_date = instances[-1].date
                     obj_contract.fin_amount_in = sum_income
-                obj_invoice.save()
+                    if sum_income >= obj_contract.fin_amount and (obj_project.status < 10):
+                        obj_project.status = 3
                 obj_contract.save()
+                obj_project.save()
                 #新的到账 通知财务部5
                 for j in User.objects.filter(groups__id=5):
                     notify.send(request.user, recipient=j, verb='填写一笔新到账',description="发票号：%s 到账金额：%s"%(obj_invoice,sum_income))
@@ -286,6 +290,8 @@ class InvoiceAdmin(ExportActionModelAdmin):
         #超级用户修改发票管理的时候,存在bill的内联table所有不添加了，
         if request.user.is_superuser:
             self.inlines = []
+        else:
+            self.inlines = [BillInline,]
         return super(InvoiceAdmin, self).get_inline_instances(request, obj)
 
     def get_formsets_with_inlines(self, request, obj=None):

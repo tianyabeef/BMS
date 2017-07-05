@@ -4,16 +4,16 @@ from django.contrib.auth.models import User
 
 class Project(models.Model):
     STATUS_CHOICES = (
-        ('FIS', '待首款'),
-        ('ENS', '待处理'),
-        ('EXT', '提取中'),
-        ('QC', '质检中'),
-        ('LIB', '建库中'),
-        ('SEQ', '测序中'),
-        ('ANA', '分析中'),
-        ('FIN', '待尾款'),
-        ('FINE','尾款已到'),
-        ('END','完成'),
+        (1, '待首款'),#'FIS'
+        (2, '待处理'),#'ENS'
+        (4, '提取中'),#'EXT'
+        (5, '质检中'),#'QC'
+        (6, '建库中'),#'LIB'
+        (7, '测序中'),#'SEQ'
+        (8, '分析中'),#'ANA'
+        (9, '待尾款'),#'FIN'
+        (3,'尾款已到'),#'FINE'
+        (10,'完成'),#'END'
     )
     contract = models.ForeignKey(
         'mm.Contract',
@@ -48,7 +48,7 @@ class Project(models.Model):
     data_date = models.DateField('释放数据日', blank=True, null=True)
     due_date = models.DateField('合同节点', blank=True, null=True)
     is_confirm = models.BooleanField('确认', default=False)
-    status = models.CharField('状态',max_length=3,choices=STATUS_CHOICES,default='FIS')
+    status = models.IntegerField('状态',max_length=3,choices=STATUS_CHOICES,default=1)
 
     class Meta:
         unique_together = ('contract', 'name')

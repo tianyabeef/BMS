@@ -210,28 +210,32 @@ class ProjectAdmin(admin.ModelAdmin):
         return obj.contract.name
     contract_name.short_description = '项目名称'
 
-    def status(self, obj):
-        if not is_period_income(obj.contract, 'FIS') <= 0 and is_period_income(obj.contract, 'FIS')!=0.001:#mm.Contract表中的FIS>0
-            return '待首款'
-        if obj.data_date:
-            return '已完成'
-        if obj.ana_end_date and is_period_income(obj.contract, 'FIN') <= 0 :
-            return '尾款已到'
-        if obj.ana_end_date and not is_period_income(obj.contract, 'FIN') <= 0 and is_period_income(obj.contract, 'FIN') != 0.001:
-            return '待尾款'
-        if obj.ana_start_date and not obj.ana_end_date:
-            return '分析中'
-        if obj.seq_start_date and not obj.seq_end_date:
-            return '测序中'
-        if LibTask.objects.filter(sample__project=obj).filter(result=None).count():
-            return '建库中'
-        if QcTask.objects.filter(sample__project=obj).filter(result=None).count():
-            return '质检中'
-        if ExtTask.objects.filter(sample__project=obj).filter(result=None).count():
-            return '提取中'
-        if is_period_income(obj.contract, 'FIS') == 0 or is_period_income(obj.contract, 'FIN') == 0.001 or is_period_income(obj.contract, 'FIS') == 0.001:
-            return '待处理'
-    status.short_description = '状态'
+    # def status(self, obj):
+    #     return obj.status.display()
+    # status.short_description = '状态'
+
+    # def status(self, obj):
+    #     if not is_period_income(obj.contract, 'FIS') <= 0 and is_period_income(obj.contract, 'FIS')!=0.001:#mm.Contract表中的FIS>0
+    #         return '待首款'
+    #     if obj.data_date:
+    #         return '已完成'
+    #     if obj.ana_end_date and is_period_income(obj.contract, 'FIN') <= 0 :
+    #         return '尾款已到'
+    #     if obj.ana_end_date and not is_period_income(obj.contract, 'FIN') <= 0 and is_period_income(obj.contract, 'FIN') != 0.001:
+    #         return '待尾款'
+    #     if obj.ana_start_date and not obj.ana_end_date:
+    #         return '分析中'
+    #     if obj.seq_start_date and not obj.seq_end_date:
+    #         return '测序中'
+    #     if LibTask.objects.filter(sample__project=obj).filter(result=None).count():
+    #         return '建库中'
+    #     if QcTask.objects.filter(sample__project=obj).filter(result=None).count():
+    #         return '质检中'
+    #     if ExtTask.objects.filter(sample__project=obj).filter(result=None).count():
+    #         return '提取中'
+    #     if is_period_income(obj.contract, 'FIS') == 0 or is_period_income(obj.contract, 'FIN') == 0.001 or is_period_income(obj.contract, 'FIS') == 0.001:
+    #         return '待处理'
+    # status.short_description = '状态'
 
     def sample_num(self, obj):
         return SampleInfo.objects.filter(project=obj).count()
