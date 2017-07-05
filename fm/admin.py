@@ -223,7 +223,10 @@ class InvoiceAdmin(ExportActionModelAdmin):
             obj_invoice = Invoice.objects.get(id=instances[-1].invoice.id)
             invoice_in_contract = Invoice.objects.filter(invoice__contract__id = instances[-1].invoice.invoice.contract.id)
             obj_contract = Contract.objects.get(id=instances[-1].invoice.invoice.contract.id)
-            obj_project = Project.objects.get(contract__id=instances[-1].invoice.invoice.contract.id)
+            try:
+                obj_project = Project.objects.get(contract__id=instances[-1].invoice.invoice.contract.id)
+            except:
+                obj_project = False
             if sum_income <= invoice_amount:
                 for instance in instances:
                     instance.save()
@@ -240,15 +243,18 @@ class InvoiceAdmin(ExportActionModelAdmin):
                         sum_income = sum([invoice_temp.income for invoice_temp in invoice_in_contract])
                     obj_contract.fis_amount_in = sum_income
                     #合同的首款<bill金额的总和,在项目管理中的状态为待处理，尾款已到。
-                    if (sum_income >= obj_contract.fis_amount) and (obj_project.status < 2):
-                        obj_project.status = 2
+                    if obj_project:
+                        if (sum_income >= obj_contract.fis_amount) and (obj_project.status < 2):
+                            obj_project.status = 2
                 if instances[-1].invoice.invoice.period == "FIN":
                     obj_contract.fin_date = instances[-1].date
                     obj_contract.fin_amount_in = sum_income
-                    if sum_income >= obj_contract.fin_amount and (obj_project.status < 10):
-                        obj_project.status = 3
+                    if obj_project:
+                        if sum_income >= obj_contract.fin_amount and (obj_project.status < 10):
+                            obj_project.status = 3
                 obj_contract.save()
-                obj_project.save()
+                if obj_project:
+                    obj_project.save()
                 #新的到账 通知财务部5
                 for j in User.objects.filter(groups__id=5):
                     notify.send(request.user, recipient=j, verb='填写一笔新到账',description="发票号：%s 到账金额：%s"%(obj_invoice,sum_income))
