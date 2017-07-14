@@ -10,6 +10,9 @@ from django.utils.html import format_html
 from django.contrib import messages
 from django.contrib.auth.models import User
 from notification.signals import notify
+from import_export.admin import ImportExportModelAdmin
+from import_export import resources
+from import_export import fields
 
 def add_business_days(from_date, number_of_days):
     to_date = from_date
@@ -171,8 +174,17 @@ class ProjectForm(forms.ModelForm):
 #             if not SampleInfo.objects.filter(project=p['id']).count() and p['is_confirm']:
 #                 raise forms.ValidationError('未收到样品的项目无法确认启动')
 
+class ProjectResource(resources.ModelResource):
 
-class ProjectAdmin(admin.ModelAdmin):
+    class Meta:
+        model = Project
+        skip_unchanged = True
+        fields = ('id','contract__contract_number',)
+
+
+
+class ProjectAdmin(ImportExportModelAdmin):
+    resource_class = ProjectResource
     form = ProjectForm
     list_display = ('id','contract_number', 'contract_name', 'is_confirm', 'status', 'sample_num', 'receive_date',
                     'contract_node', 'ext_status', 'qc_status', 'lib_status', 'seq_status', 'ana_status',

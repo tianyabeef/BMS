@@ -240,7 +240,7 @@ class InvoiceAdmin(ExportActionModelAdmin):
                     obj_contract.fis_date = instances[-1].date
                     #如果首款有多张发票
                     if invoice_in_contract:
-                        sum_income = sum([invoice_temp.income for invoice_temp in invoice_in_contract])
+                        sum_income = sum([invoice_temp.income for invoice_temp in invoice_in_contract if invoice_temp.income])
                     obj_contract.fis_amount_in = sum_income
                     #合同的首款<bill金额的总和,在项目管理中的状态为待处理，尾款已到。
                     if obj_project:

@@ -372,12 +372,20 @@ class ContractAdmin(ExportActionModelAdmin):
             obj.send_date = datetime.now()
         elif not obj.tracking_number:
             obj.send_date = None
-        if obj.receive_date and Contract.objects.filter(id=obj.id)[0].receive_date != obj.receive_date:
-            #合同寄到日有变动就 通知项目管理2
-            for j in User.objects.filter(groups__id=2):
-                notify.send(request.user, recipient=j, verb='客户收到新合同',\
-                            description="合同号：%s\t合同名称：%s\t合同联系人：%s\t电话：%s"%\
-                                        (obj.contract_number,obj.name,obj.contacts,obj.contact_phone))
+        if Contract.objects.filter(id=obj.id):
+            if obj.receive_date and Contract.objects.filter(id=obj.id)[0].receive_date != obj.receive_date:
+                #合同寄到日有变动就 通知项目管理2
+                for j in User.objects.filter(groups__id=2):
+                    notify.send(request.user, recipient=j, verb='客户收到新合同',\
+                                description="合同号：%s\t合同名称：%s\t合同联系人：%s\t电话：%s"%\
+                                            (obj.contract_number,obj.name,obj.contacts,obj.contact_phone))
+        else:
+            if obj.receive_date:
+                #新增合同时，就有寄到日有变动就 通知项目管理2
+                for j in User.objects.filter(groups__id=2):
+                    notify.send(request.user, recipient=j, verb='客户收到新合同',\
+                                description="合同号：%s\t合同名称：%s\t合同联系人：%s\t电话：%s"%\
+                                            (obj.contract_number,obj.name,obj.contacts,obj.contact_phone))
         obj.save()
 
 admin.site.register(Contract, ContractAdmin)
