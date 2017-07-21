@@ -27,6 +27,7 @@ class InvoiceTitleAdmin(ImportExportActionModelAdmin):
     fields = ('title', 'tariffItem')
     search_fields = ['title','tariffItem']
 
+
 class InvoiceForm(forms.ModelForm):
     # 开票金额与合同对应款期额校验 #22
     def clean_amount(self):
@@ -106,6 +107,7 @@ class InvoiceInline(admin.StackedInline):
         return obj.title.tariffItem
     title_tariffItem.short_description = '税号'
 
+
 class ContractChangeList(ChangeList):
     def get_results(self, *args, **kwargs):
         super(ContractChangeList, self).get_results(*args, **kwargs)
@@ -138,6 +140,7 @@ class SaleListFilter(admin.SimpleListFilter):
         for i in qs:
             if self.value() == i.username:
                 return queryset.filter(salesman=i)
+
 
 class ContractResource(resources.ModelResource):
     #按照合同号导出
@@ -185,6 +188,7 @@ class ContractResource(resources.ModelResource):
         return contract.get_range_display()
     def dehydrate_contract_salesman(self,contract):
         return "%s%s"%(contract.salesman.last_name,contract.salesman.first_name)
+
 
 class ContractAdmin(ExportActionModelAdmin):
     resource_class = ContractResource

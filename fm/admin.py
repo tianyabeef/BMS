@@ -28,6 +28,7 @@ class InvoiceChangeList(ChangeList):
         except KeyError:
             self.sum = ['','', '']
 
+
 class InvoiceInfoResource(resources.ModelResource):
     contract_salesman = fields.Field(column_name='销售人员')
     invoice_contract_number = fields.Field(column_name='合同号',attribute='invoice__contract',widget=ForeignKeyWidget(Contract, 'contract_number'))
@@ -69,6 +70,7 @@ class InvoiceInfoResource(resources.ModelResource):
     def dehydrate_invoice_issuingUnit(self,invoice):
         return invoice.invoice.get_issuingUnit_display()
 
+
 class BillInlineFormSet(BaseInlineFormSet):
     def clean(self):
         super(BillInlineFormSet, self).clean()
@@ -109,6 +111,7 @@ class SaleListFilter(admin.SimpleListFilter):
         for i in qs:
             if self.value() == i.username:
                 return queryset.filter(invoice__contract__salesman=i)
+
 
 class InvoiceAdmin(ExportActionModelAdmin):
     resource_class = InvoiceInfoResource

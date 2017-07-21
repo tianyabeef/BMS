@@ -176,6 +176,11 @@ class ProjectForm(forms.ModelForm):
 
 class ProjectResource(resources.ModelResource):
 
+    def init_instance(self, row=None):
+        instance = self._meta.model()
+        instance.project = Project.objects.get(id=row['contract__contract_number'])
+        return instance
+
     class Meta:
         model = Project
         skip_unchanged = True
