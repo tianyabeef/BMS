@@ -242,6 +242,7 @@ class InvoiceAdmin(ExportActionModelAdmin):
                 if instances[-1].invoice.invoice.period == "FIS":
                     obj_contract.fis_date = instances[-1].date
                     #如果首款有多张发票
+                    invoice_in_contract = invoice_in_contract.filter(invoice__period="FIS")
                     if invoice_in_contract:
                         sum_income = sum([invoice_temp.income for invoice_temp in invoice_in_contract if invoice_temp.income])
                     obj_contract.fis_amount_in = sum_income
@@ -251,6 +252,10 @@ class InvoiceAdmin(ExportActionModelAdmin):
                             obj_project.status = 2
                 if instances[-1].invoice.invoice.period == "FIN":
                     obj_contract.fin_date = instances[-1].date
+                    # 如果尾款有多张发票
+                    invoice_in_contract = invoice_in_contract.filter(invoice__period="FIN")
+                    if invoice_in_contract:
+                        sum_income = sum([invoice_temp.income for invoice_temp in invoice_in_contract if invoice_temp.income])
                     obj_contract.fin_amount_in = sum_income
                     if obj_project:
                         if sum_income >= obj_contract.fin_amount and (obj_project.status < 10):
