@@ -78,6 +78,8 @@ class Invoice(models.Model):
     ISSUING_UNIT_CHOICES = (
         ('sh', '上海锐翌'),
         ('hz', '杭州拓宏'),
+        ('sd','山东锐翌'),
+        ('sz','金锐生物'),
     )
     contract = models.ForeignKey(
         Contract,
