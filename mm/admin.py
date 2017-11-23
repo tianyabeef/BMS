@@ -50,7 +50,7 @@ class InvoiceAdmin(admin.ModelAdmin):
     Admin class for invoice
     """
     form = InvoiceForm
-    list_display = ('contract', 'title', 'period', 'amount', 'note', 'submit')
+    list_display = ('contract', 'title', 'period', 'amount', 'issuingUnit','note', 'submit')
     actions = ['make_invoice_submit']
     list_display_links = None
     fields = ('contract','title','issuingUnit','period', 'amount','type','content', 'note')
