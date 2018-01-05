@@ -23,7 +23,7 @@ class Contract(models.Model):
         (4, '转录组'),
         (5, '其它'),
     )
-    contract_number = models.CharField('合同号', max_length=15, unique=True)
+    contract_number = models.CharField('合同号', max_length=30, unique=True)
     name = models.CharField('合同名', max_length=100)
     type = models.IntegerField(
         '类型',
