@@ -119,7 +119,22 @@ class InvoiceAdmin(ExportActionModelAdmin):
                     'contract_type', 'invoice_period','invoice_issuingUnit', 'invoice_title', 'invoice_amount', 'income_date',
                     'bill_receivable', 'invoice_code', 'date', 'tracking_number', 'send_date','file_link')
     list_display_links = ['invoice_title', 'invoice_amount']
-    search_fields = ['invoice__contract__contract_number','invoice__title__title','invoice_code','^invoice__amount']
+    search_fields = ['invoice__contract__contract_number','invoice__title__title','invoice_code','^invoice__amount','invoice__issuingUnit']
+
+    def get_search_results(self, request, queryset, search_term):
+        #TODO#先用固定数组，后期修改为调用invoice__issuingUnit的ISSUING_UNIT_CHOICES
+        ISSUING_UNIT_CHOICES ={}
+        ISSUING_UNIT_CHOICES['上海锐翌']='sh'
+        ISSUING_UNIT_CHOICES['杭州拓宏']='hz'
+        ISSUING_UNIT_CHOICES['山东锐翌']='sd'
+        ISSUING_UNIT_CHOICES['金锐生物']='sz'
+        if search_term in ISSUING_UNIT_CHOICES.keys():
+            queryset, use_distinct = super().get_search_results(request, queryset, ISSUING_UNIT_CHOICES[search_term])
+        else:
+            queryset, use_distinct = super().get_search_results(request, queryset, search_term)
+        return queryset, use_distinct
+
+
     inlines = [
         BillInline,
     ]
