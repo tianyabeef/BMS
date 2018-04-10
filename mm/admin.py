@@ -203,7 +203,7 @@ class ContractAdmin(ExportActionModelAdmin):
     ordering = ['-id']
     fieldsets = (
         ('基本信息', {
-            'fields': ('contract_number', 'name', 'type', 'salesman',('contacts','contact_phone'), ('price', 'range'), ('fis_amount', 'fin_amount','all_amount'))
+            'fields': ('contract_number', 'name', 'type', 'salesman',('contacts','contact_phone'), ('price', 'range'), ('fis_amount', 'fin_amount','all_amount'),('contact_note'))
         }),
         ('邮寄信息', {
             'fields': ('tracking_number','send_date','receive_date')
