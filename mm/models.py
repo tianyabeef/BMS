@@ -49,7 +49,7 @@ class Contract(models.Model):
     contacts = models.CharField('合同联系人',max_length=15, blank=True)
     contact_phone = models.CharField('电话',max_length=30, blank=True)
 
-    contact_note = models.TextField('合同备注',null=True)
+    contact_note = models.TextField('合同备注',blank=True)
 
     class Meta:
         verbose_name = '合同管理'
