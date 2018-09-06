@@ -39,6 +39,7 @@ class InvoiceInfoResource(resources.ModelResource):
     contract_amount = fields.Field(column_name='合同金额')
     contract_income = fields.Field(column_name='回款金额',attribute='income')
     invoice_amount = fields.Field(column_name='发票金额')
+    date = fields.Field(column_name='开票日期',attribute='date')
     contract_income_date = fields.Field(column_name='到款日期',attribute='income_date')
     invoice_code = fields.Field(column_name='发票号码',attribute='invoice_code')
     invoice_type = fields.Field(column_name='发票类型')
@@ -50,10 +51,10 @@ class InvoiceInfoResource(resources.ModelResource):
         model = Invoice
         skip_unchanged = True
         fields = ('contract_salesman','invoice_contract_number','contract_name','invoice_title','contract_price','contract_range',
-                  'contract_amount','invoice_amount','contract_income','contract_income_date','invoice_code',
+                  'contract_amount','invoice_amount','contract_income','date','contract_income_date','invoice_code',
                   'invoice_type','invoice_tax_amount','invoice_content','invoice_issuingUnit')
         export_order = ('contract_salesman','invoice_contract_number','contract_name','invoice_title','contract_price','contract_range',
-                        'contract_amount','invoice_amount','contract_income','contract_income_date','invoice_code',
+                        'contract_amount','invoice_amount','contract_income','date','contract_income_date','invoice_code',
                         'invoice_type','invoice_tax_amount','invoice_content','invoice_issuingUnit')
     def dehydrate_contract_amount(self, invoice):
         return '%.2f' % (invoice.invoice.contract.fis_amount+invoice.invoice.contract.fin_amount)
